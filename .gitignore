@@ -1,0 +1,13 @@
+*.log
+*.log.temp
+*.cmd
+
+# Mac cache
+.DS_Store
+
+# generation directories
+./data
+./HF
+./models
+./user
+
