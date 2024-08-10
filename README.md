@@ -39,8 +39,9 @@ docker run --rm -it --runtime nvidia --gpus all -v `pwd`/HF:/HF -v `pwd`/models:
 
 At first run, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the bottle generating example.
 
-That model is located at https://civitai.com/models/18798?modelVersionId=112809 (version 4.1 is the one listed)
+See the file name displayed in the "Load Checkpoint" node, and find it on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
 After obtaining it, we place it in the `models/checkpoints` directory, matching the file name.
+If placing more than one checkpoint in the directory, using the "Refresh" button will update the "Load Checkpoint" list of options.
 
 We can now `Queue Prompt` :)
 
