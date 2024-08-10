@@ -2,7 +2,7 @@
 
 [ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) is an impressive diffusion WebUI. With the recent addition of a [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/) I wanted to test it.
 
-[CTPO](https://github.com/Infotrend-Inc/CTPO) is a building block container providing CUDA, TensorFlow, PyTorch and OpenCV. Having its Jupyter lab version already installed on my system allows me to have a reproducible development environment.
+[CTPO](https://github.com/Infotrend-Inc/CTPO) is a building block container providing CUDA, TensorFlow, PyTorch and OpenCV. Having its Jupyter lab version already installed on a system allows us to have a reproducible development environment.
 
 This container is built `FROM` that base image (which is also the base image for the Jupyter lab version).
 
