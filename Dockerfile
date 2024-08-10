@@ -1,4 +1,4 @@
-FROM infotrend/ctpo-cuda_pytorch_opencv:12.3.2_2.2.2_4.9.0-20240421
+FROM infotrend/ctpo-cuda_tensorflow_pytorch_opencv:12.3.2_2.16.1_2.2.2_4.9.0-20240421
 
 RUN apt update -y && apt upgrade -y
 
@@ -6,6 +6,8 @@ ARG COMFY_VERSION="0.0.5"
 ENV COMFY_DIR="/ComfyUI"
 RUN mkdir -p ${COMFY_DIR}
 WORKDIR ${COMFY_DIR}
+
+ENV PIP_ROOT_USER_ACTION=ignore
 
 RUN wget -q -O /tmp/get-pip.py --no-check-certificate https://bootstrap.pypa.io/get-pip.py \
   && python3 /tmp/get-pip.py \
@@ -41,4 +43,4 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 EXPOSE 8188
 
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
-CMD python3 main.py --listen 0.0.0.0 --disable-auto-launch --output-directory=/data/output --temp-directory /data/temp --input-directory /data/input
+CMD python3 main.py --listen 0.0.0.0 --disable-auto-launch --output-directory /data/output --temp-directory /data/temp --input-directory /data/input
