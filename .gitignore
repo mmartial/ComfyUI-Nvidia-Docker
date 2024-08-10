@@ -6,8 +6,7 @@
 .DS_Store
 
 # generation directories
-./data
-./HF
-./models
-./user
-
+data/*
+HF/*
+models/*
+user/*
