@@ -11,7 +11,7 @@ This will allow a local directory structure for side data (input, output, temp, 
 
 ## Building the container
 
-Running `make` will show you the `build` option to "builds comfyui-ctpo:0.0.5 (to be run as uid: UID / gid: GID) and tags it as comfyui-ctpo:latest"
+Running `make` will show us the `build` option to "builds comfyui-ctpo:0.0.5 (to be run as uid: UID / gid: GID) and tags it as comfyui-ctpo:latest"
 
 Run:
 ```bash
@@ -22,7 +22,7 @@ Feel free to modify the `Dockerfile` as needed.
 
 ## Running the container
 
-In the directory where you intend to run the container, prefer a subset of directories to place data (if they are not already present):
+In the directory where we intend to run the container, prefer a subset of directories to place data (if they are not already present):
 
 ```bash
 mkdir HF
