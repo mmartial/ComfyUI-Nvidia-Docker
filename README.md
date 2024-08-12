@@ -1,15 +1,17 @@
 # ComfyUI in CTPO
 
-[ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) is an impressive diffusion WebUI. With the recent addition of a [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/) I wanted to test it.
+[ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) is an impressive diffusion WebUI. With the recent addition of a [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/), I created this container builder to test it.
 
 [CTPO](https://github.com/Infotrend-Inc/CTPO) is a building block container providing CUDA, TensorFlow, PyTorch and OpenCV. Having its Jupyter lab version already installed on a system allows us to have a reproducible development environment.
 
 This container is built `FROM` that base image (which is also the base image for the Jupyter lab version).
 
-This build is set to use ComfyUI v0.0.5 (released Today -- 20240810) and to run as a `comfy` user whose UID and GID are copied from the user's own `uid` and `gid`.
+This build is set to use the ComfyUI version you set in the `Makefile` by adapting the `COMFY_VERSION` variable. This build is also set to run as a `comfy` user whose UID and GID are copied from the user's own `uid` and `gid`.
 This will allow a local directory structure for side data (input, output, temp, user), Hugging Face `HF_HOME` if used, and the entire `models` being separate from the running container.
 
 ## Building the container
+
+First, edit the `Makefile` and modify the `COMFY_VERSION` to reflect the latest release.
 
 Running `make` will show us the `build` option to "builds comfyui-ctpo:0.0.5 (to be run as uid: UID / gid: GID) and tags it as comfyui-ctpo:latest"
 
