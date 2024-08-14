@@ -1,4 +1,4 @@
-ARG DOCKER_FROM="infotrend/ctpo-cuda_tensorflow_pytorch_opencv:12.3.2_2.16.1_2.2.2_4.9.0-20240421"
+ARG DOCKER_FROM=comfyui-base:latest
 FROM ${DOCKER_FROM}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -24,7 +24,7 @@ RUN wget -q -O /tmp/get-pip.py --no-check-certificate https://bootstrap.pypa.io/
 
 RUN wget -q https://github.com/comfyanonymous/ComfyUI/archive/refs/tags/v${COMFY_VERSION}.tar.gz -O - | tar --strip-components=1 -xz -C ${COMFY_DIR} \
     && cd ${COMFY_DIR} \
-    && pip3 install -r requirements.txt \
+    && pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
     && rm -rf /root/.cache/pip
 
 # Create a local comfy user (can make it the same uid and gid as the user building the container)

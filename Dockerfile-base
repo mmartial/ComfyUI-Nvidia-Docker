@@ -1,0 +1,46 @@
+ARG DOCKER_FROM=nvidia/cuda:12.3.2-runtime-ubuntu22.04
+FROM ${DOCKER_FROM}
+
+# Adapted from https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.2.2/ubuntu2204/devel/cudnn8/Dockerfile
+ENV NV_CUDNN_VERSION 8.9.7.29
+ENV NV_CUDNN_PACKAGE_NAME "libcudnn8"
+ENV NV_CUDA_ADD=cuda12.2
+ENV NV_CUDNN_PACKAGE "$NV_CUDNN_PACKAGE_NAME=$NV_CUDNN_VERSION-1+$NV_CUDA_ADD"
+ENV NV_CUDNN_PACKAGE_DEV "$NV_CUDNN_PACKAGE_NAME-dev=$NV_CUDNN_VERSION-1+$NV_CUDA_ADD"
+LABEL com.nvidia.cudnn.version="${NV_CUDNN_VERSION}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ${NV_CUDNN_PACKAGE} \
+    ${NV_CUDNN_PACKAGE_DEV} \
+    && apt-mark hold ${NV_CUDNN_PACKAGE_NAME} \
+    && rm -rf /var/lib/apt/lists/*
+
+##### Base
+
+# Install system packages
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y --fix-missing\
+  && apt-get install -y \
+    apt-utils \
+    locales \
+    ca-certificates \
+    && apt-get upgrade -y \
+    && apt-get clean
+
+# UTF-8
+RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+ENV LANG en_US.utf8
+ENV LC_ALL=C
+
+RUN apt-get install -y \
+      build-essential \
+      python3-dev \
+      unzip \
+      wget \
+      zip \
+      zlib1g \
+      zlib1g-dev \
+      gnupg \
+    && apt-get clean
+
+CMD /bin/bash

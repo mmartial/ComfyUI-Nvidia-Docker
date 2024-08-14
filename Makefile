@@ -2,7 +2,6 @@ SHELL := /bin/bash
 .PHONY: all
 
 DOCKER_CMD=docker
-DOCKER_FROM="infotrend/ctpo-cuda_tensorflow_pytorch_opencv:12.3.2_2.16.1_2.2.2_4.9.0-20240421"
 
 # Following ComfyUI release number
 # Automatically find the latest release number
@@ -10,7 +9,21 @@ COMFY_VERSION=$(shell curl  -L -sS  -H "Accept: application/json" https://api.gi
 # To manually set the release, uncomment and modify the line below
 #COMFY_VERSION="0.0.6"
 
-COMFY_CONTAINER_NAME=comfyui-ctpo
+# BASE container build
+COMFY_BASE=comfyui-base
+BASE_BUILD=${COMFY_BASE}:${BASE_DATE}
+BASE_BUILD_PRESENT=$(shell test $(docker images -q ${BASE_BUILD}) && echo 1 || echo 0)
+BASE_BUILD_LATEST=${COMFY_BASE}:latest
+
+BASE_DOCKER_FROM=nvidia/cuda:12.3.2-runtime-ubuntu22.04
+BASE_DOCKERFILE=Dockerfile-base
+BASE_DATE=$(shell printf '%(%Y%m%d)T' -1)
+
+# ComfyUI container build "FROM" the BASE container
+COMFY_CONTAINER_NAME=comfyui-docker
+
+DOCKERFILE=Dockerfile
+DOCKER_FROM=${BASE_BUILD_LATEST}
 
 NAMED_BUILD=${COMFY_CONTAINER_NAME}:${COMFY_VERSION}
 NAMED_BUILD_LATEST=${COMFY_CONTAINER_NAME}:latest
@@ -22,6 +35,7 @@ COMFY_GID=`id -g`
 #COMFY_GID=1000
 
 UNRAID_BUILD=${COMFY_CONTAINER_NAME}-unraid:${COMFY_VERSION}
+UNRAID_BUILD_PRESENT=$(shell test $(docker images -q ${UNRAID_BUILD}) && echo 1 || echo 0)
 UNRAID_BUILD_LATEST=${COMFY_CONTAINER_NAME}-unraid:latest
 UNRAID_UID=99
 UNRAID_GID=100
@@ -32,18 +46,71 @@ DOCKER_BUILD_ARGS=
 #DOCKER_BUILD_ARGS="--no-cache"
 
 all:
+	@echo "== Latest ComfyUI version: ${COMFY_VERSION}"
 	@echo "** Available Docker images to be built (make targets):"
-	@echo "local:          builds ${NAMED_BUILD} (to be run as uid: ${COMFY_UID} / gid: ${COMFY_GID}) and tags it as ${NAMED_BUILD_LATEST}"
-	@echo "unraid:         builds ${UNRAID_BUILD} (to be run as uid: ${UNRAID_UID} / gid: ${UNRAID_GID}) and tags it as ${UNRAID_BUILD_LATEST}"
+	@echo "base:           builds ${BASE_BUILD} and tags it as ${BASE_BUILD_LATEST}"
+	@echo "local:          builds ${NAMED_BUILD} (to be run as uid: ${COMFY_UID} / gid: ${COMFY_GID}) and tags it as ${NAMED_BUILD_LATEST} (requires base)"
+	@echo "unraid:         builds ${UNRAID_BUILD} (to be run as uid: ${UNRAID_UID} / gid: ${UNRAID_GID}) and tags it as ${UNRAID_BUILD_LATEST} (requires base)"
 	@echo "build:          builds both local and unraid"
 
-local:
-	@VAR_NT=${COMFY_CONTAINER_NAME}-${COMFY_VERSION} USED_UID=${COMFY_UID} USED_GID=${COMFY_GID} USED_BUILD=${NAMED_BUILD} USED_BUILD_LATEST=${NAMED_BUILD_LATEST} make build_main
+##### base
 
-unraid:
-	@VAR_NT=${COMFY_CONTAINER_NAME}-unraid-${COMFY_VERSION} USED_UID=${UNRAID_UID} USED_GID=${UNRAID_GID} USED_BUILD=${UNRAID_BUILD} USED_BUILD_LATEST=${UNRAID_BUILD_LATEST} make build_main
+base:
+	@echo "ComfyUI version: ${COMFY_VERSION}"
+	@VAR_NT=${COMFY_BASE}-${BASE_DATE} make build_base_check
 
-build_main:
+build_base_check:
+	@echo "== [${BASE_BUILD}] =="
+ifeq ($(shell docker images -q ${NAMED_BUILD} 2> /dev/null),)
+	@make build_base_check_part2
+else
+	@echo "Image ${NAMED_BUILD} already exists, skipping base step" 
+endif
+
+build_base_check_part2:
+ifeq ($(shell docker images -q ${BASE_BUILD} 2> /dev/null),)
+	@make build_base_actual
+else
+	@echo "Image ${BASE_BUILD} exists, skipping step"
+endif
+
+build_base_actual:
+	@echo "-- Docker command to be run:"
+	@echo "BUILDX_EXPERIMENTAL=1 ${DOCKER_PRE} docker buildx debug --on=error build --progress plain --platform linux/amd64 ${DOCKER_BUILD_ARGS} \\" > ${VAR_NT}.cmd
+	@echo "  --build-arg DOCKER_FROM=\"${BASE_DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
+	@echo "  --tag=\"${BASE_BUILD}\" \\" >> ${VAR_NT}.cmd
+	@echo "  -f ${BASE_DOCKERFILE} \\" >> ${VAR_NT}.cmd
+	@echo "  ." >> ${VAR_NT}.cmd
+
+	@cat ${VAR_NT}.cmd | tee ${VAR_NT}.log.temp
+	@chmod +x ./${VAR_NT}.cmd
+	@script -a -e -c ./${VAR_NT}.cmd ${VAR_NT}.log.temp; exit "$${PIPESTATUS[0]}"
+
+	@mv ${VAR_NT}.log.temp ${VAR_NT}.log
+	@rm -f ./${VAR_NT}.cmd
+
+	@${DOCKER_CMD} tag ${BASE_BUILD} ${BASE_BUILD_LATEST}
+
+
+##### main
+
+local: base
+	@VAR_NT=${COMFY_CONTAINER_NAME}-${COMFY_VERSION} USED_UID=${COMFY_UID} USED_GID=${COMFY_GID} USED_BUILD=${NAMED_BUILD} USED_BUILD_LATEST=${NAMED_BUILD_LATEST} make build_main_check
+
+unraid: base
+	@VAR_NT=${COMFY_CONTAINER_NAME}-unraid-${COMFY_VERSION} USED_UID=${UNRAID_UID} USED_GID=${UNRAID_GID} USED_BUILD=${UNRAID_BUILD} USED_BUILD_LATEST=${UNRAID_BUILD_LATEST} make build_main_check
+
+build: local unraid
+
+build_main_check:
+	@echo "== [${USED_BUILD}] =="
+ifeq ($(shell docker images -q ${USED_BUILD} 2> /dev/null),)
+	@make build_main_actual
+else
+	@echo "Image ${USED_BUILD} exists, skipping step"
+endif
+
+build_main_actual:
 	@echo "-- Docker command to be run:"
 	@echo "BUILDX_EXPERIMENTAL=1 ${DOCKER_PRE} docker buildx debug --on=error build --progress plain --platform linux/amd64 ${DOCKER_BUILD_ARGS} \\" > ${VAR_NT}.cmd
 	@echo "  --build-arg DOCKER_FROM=\"${DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
@@ -51,7 +118,7 @@ build_main:
 	@echo "  --build-arg COMFY_UID=\"${USED_UID}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --build-arg COMFY_GID=\"${USED_GID}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --tag=\"${USED_BUILD}\" \\" >> ${VAR_NT}.cmd
-	@echo "  -f Dockerfile \\" >> ${VAR_NT}.cmd
+	@echo "  -f ${DOCKERFILE} \\" >> ${VAR_NT}.cmd
 	@echo "  ." >> ${VAR_NT}.cmd
 
 	@cat ${VAR_NT}.cmd | tee ${VAR_NT}.log.temp
@@ -62,3 +129,27 @@ build_main:
 	@rm -f ./${VAR_NT}.cmd
 
 	@${DOCKER_CMD} tag ${USED_BUILD} ${USED_BUILD_LATEST}
+
+##### push 
+DOCKERHUB_REPO="mmartial"
+
+docker_push: local unraid
+	@echo "Creating docker hub tags -- Press Ctl+c within 5 seconds to cancel -- will only work for maintainers"
+	@for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; echo ""
+	@make base
+	@${DOCKER_CMD} tag ${BASE_BUILD} ${DOCKERHUB_REPO}/${BASE_BUILD}
+	@${DOCKER_CMD} tag ${BASE_BUILD_LATEST} ${DOCKERHUB_REPO}/${BASE_BUILD_LATEST}
+	@make local
+	@${DOCKER_CMD} tag ${NAMED_BUILD} ${DOCKERHUB_REPO}/${NAMED_BUILD}
+	@${DOCKER_CMD} tag ${NAMED_BUILD_LATEST} ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
+	@make unraid
+	@${DOCKER_CMD} tag ${UNRAID_BUILD} ${DOCKERHUB_REPO}/${UNRAID_BUILD}
+	@${DOCKER_CMD} tag ${UNRAID_BUILD_LATEST} ${DOCKERHUB_REPO}/${UNRAID_BUILD_LATEST}
+	@echo "hub.docker.com upload -- Press Ctl+c within 5 seconds to cancel -- will only work for maintainers"
+	@for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; echo ""
+	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${BASE_BUILD}
+	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${BASE_BUILD_LATEST}
+	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${NAMED_BUILD}
+	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
+	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${UNRAID_BUILD}
+	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${UNRAID_BUILD_LATEST}
