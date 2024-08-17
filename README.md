@@ -41,3 +41,6 @@ docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/home/comfy/mnt -e 
 
 At first run, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example. Depending on the workflow, and the needed files by the different nodes, some , and find it on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
 For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those before a "Queue Prompt")
+
+## Availability on DockerHub
+
