@@ -10,7 +10,7 @@ COMFY_VERSION=$(shell curl  -L -sS  -H "Accept: application/json" https://api.gi
 #COMFY_VERSION="0.0.6"
 
 # BASE container build
-COMFY_BASE=comfyui-base
+COMFY_BASE=comfyui-nvidia-base
 BASE_BUILD=${COMFY_BASE}:${BASE_DATE}
 BASE_BUILD_PRESENT=$(shell test $(docker images -q ${BASE_BUILD}) && echo 1 || echo 0)
 BASE_BUILD_LATEST=${COMFY_BASE}:latest
@@ -20,7 +20,7 @@ BASE_DOCKERFILE=Dockerfile-base
 BASE_DATE=$(shell printf '%(%Y%m%d)T' -1)
 
 # ComfyUI container build "FROM" the BASE container
-COMFY_CONTAINER_NAME=comfyui-docker
+COMFY_CONTAINER_NAME=comfyui-nvidia-docker
 
 DOCKERFILE=Dockerfile
 DOCKER_FROM=${BASE_BUILD_LATEST}
@@ -34,12 +34,6 @@ COMFY_GID=`id -g`
 #COMFY_UID=1000
 #COMFY_GID=1000
 
-UNRAID_BUILD=${COMFY_CONTAINER_NAME}-unraid:${COMFY_VERSION}
-UNRAID_BUILD_PRESENT=$(shell test $(docker images -q ${UNRAID_BUILD}) && echo 1 || echo 0)
-UNRAID_BUILD_LATEST=${COMFY_CONTAINER_NAME}-unraid:latest
-UNRAID_UID=99
-UNRAID_GID=100
-
 DOCKER_PRE="NVIDIA_VISIBLE_DEVICES=all"
 
 DOCKER_BUILD_ARGS=
@@ -50,8 +44,7 @@ all:
 	@echo "** Available Docker images to be built (make targets):"
 	@echo "base:           builds ${BASE_BUILD} and tags it as ${BASE_BUILD_LATEST}"
 	@echo "local:          builds ${NAMED_BUILD} (to be run as uid: ${COMFY_UID} / gid: ${COMFY_GID}) and tags it as ${NAMED_BUILD_LATEST} (requires base)"
-	@echo "unraid:         builds ${UNRAID_BUILD} (to be run as uid: ${UNRAID_UID} / gid: ${UNRAID_GID}) and tags it as ${UNRAID_BUILD_LATEST} (requires base)"
-	@echo "build:          builds both local and unraid"
+	@echo "build:          builds local"
 
 ##### base
 
@@ -97,10 +90,7 @@ build_base_actual:
 local: base
 	@VAR_NT=${COMFY_CONTAINER_NAME}-${COMFY_VERSION} USED_UID=${COMFY_UID} USED_GID=${COMFY_GID} USED_BUILD=${NAMED_BUILD} USED_BUILD_LATEST=${NAMED_BUILD_LATEST} make build_main_check
 
-unraid: base
-	@VAR_NT=${COMFY_CONTAINER_NAME}-unraid-${COMFY_VERSION} USED_UID=${UNRAID_UID} USED_GID=${UNRAID_GID} USED_BUILD=${UNRAID_BUILD} USED_BUILD_LATEST=${UNRAID_BUILD_LATEST} make build_main_check
-
-build: local unraid
+build: local
 
 build_main_check:
 	@echo "== [${USED_BUILD}] =="
@@ -133,7 +123,7 @@ build_main_actual:
 ##### push 
 DOCKERHUB_REPO="mmartial"
 
-docker_push: local unraid
+docker_push: local
 	@echo "Creating docker hub tags -- Press Ctl+c within 5 seconds to cancel -- will only work for maintainers"
 	@for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; echo ""
 	@make base
@@ -142,14 +132,9 @@ docker_push: local unraid
 	@make local
 	@${DOCKER_CMD} tag ${NAMED_BUILD} ${DOCKERHUB_REPO}/${NAMED_BUILD}
 	@${DOCKER_CMD} tag ${NAMED_BUILD_LATEST} ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
-	@make unraid
-	@${DOCKER_CMD} tag ${UNRAID_BUILD} ${DOCKERHUB_REPO}/${UNRAID_BUILD}
-	@${DOCKER_CMD} tag ${UNRAID_BUILD_LATEST} ${DOCKERHUB_REPO}/${UNRAID_BUILD_LATEST}
 	@echo "hub.docker.com upload -- Press Ctl+c within 5 seconds to cancel -- will only work for maintainers"
 	@for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; echo ""
 	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${BASE_BUILD}
 	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${BASE_BUILD_LATEST}
 	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${NAMED_BUILD}
 	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
-	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${UNRAID_BUILD}
-	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${UNRAID_BUILD_LATEST}
