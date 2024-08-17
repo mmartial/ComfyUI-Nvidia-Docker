@@ -17,7 +17,9 @@ The tool will create many directories inside the "run directory": HF, data/{inpu
 
 All those folders will be created with the WANTED_UID and WANTED_GID parameters (by default using Unraid's default of 99:100) allowing the end-user to place directly into the folders their checkpoints, unet, lora and other required models.
 
-Output files will be placed into the data/output folder.
+Note that the base container comes with no weights/models; you need to obtain those and install them in the proper directories under the mount you have selected for the "run" folder.
+
+Output files will be placed into the data/output folder within that "run" folder.
 &#xD;
 Please see https://github.com/mmartial/ComfyUI-Nvidia-Docker for further details.&#xD;
   </Overview>
