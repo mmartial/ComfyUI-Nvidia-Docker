@@ -8,7 +8,7 @@
   <MyIP/>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>TBD</Support>
+  <Support>https://forums.unraid.net/topic/172874-support-comfyui-nvidia-docker/</Support>
   <Project>https://github.com/mmartial/ComfyUI-Nvidia-Docker</Project>
   <Overview>
 ComfyUI WebUI Dockerfile with Nvidia support, built from the latest official ComfyUI GitHub release&#xD;
