@@ -6,7 +6,7 @@ With the recent addition of a [Flux example](https://comfyanonymous.github.io/Co
 The `Makefile` will attempt to find the latest published release on GitHub and automatically propose to build this version.
 It is also possible to manually set the version, by modifying the `Makefile` and adapting the `COMFY_VERSION` variable. 
 
-This build is also set to run as a user whose UID and GID are copied from the container building user' own `uid` and `gid`.
+This build is also set to not run internally as the `root` user, but run as a user whose UID and GID are copied from the container building user' own `uid` and `gid` (it is also possible to request a different UID/GID at `docker run` time).
 This is done to a allow end users to have local directory structures for all the side data (input, output, temp, user), Hugging Face `HF_HOME` if used, and the entire `models` being separate from the running container and able to be altered by the user.
 
 The tag for the ComfyUI container image is obtained from the latest official release from GitHub.
@@ -21,6 +21,10 @@ Note:
 - also available: [FLUX.1dev with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
 
 ## Building the container
+
+The `comfyui-nvidia-base` (`base`) image contains the prerequisites to enable a ComfyUI installation from its latest release from GitHub.
+
+The `comfyui-nvidia-docker` (`local`) image contains the installation of the core components of ComfyUI from its latest release from GitHub. 
 
 Running `make` will show us the different build options; `local` is the one most people will want.
 
@@ -48,3 +52,11 @@ For example, for checkpoints, those would go in the `run/models/checkpoints` dir
 
 ## Availability on DockerHub
 
+Builds are available on DockerHub:
+- [mmartial/comfyui-nvidia-docker](https://hub.docker.com/r/mmartial/comfyui-nvidia-docker), the ComfyUI pre-built image generated from the file in this repository's `Dockerfile`.
+- [mmartial/comfyui-nvidia-base](https://hub.docker.com/r/mmartial/comfyui-nvidia-base), the base container that is used by the ComfyUI image. This image is published as it can be useful being a Ubuntu 22.04 with Nvidia components installed. For details on what is incorporated, please see the `Dockerfile-base` file.
+
+## Unraid avability
+
+The container has been tested on Unraid.
+I will update this when it has been added to the Community Apps.
