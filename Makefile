@@ -220,7 +220,7 @@ clean_local:
 ##### push 
 DOCKERHUB_REPO="mmartial"
 
-docker_push:
+docker_tag:
 	@make check_comfy_version
 	@echo "Creating docker hub tags -- Press Ctl+c within 5 seconds to cancel -- will only work for maintainers"
 	@for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; echo ""
@@ -230,6 +230,9 @@ docker_push:
 	@make local
 	@${DOCKER_CMD} tag ${NAMED_BUILD} ${DOCKERHUB_REPO}/${NAMED_BUILD}
 	@${DOCKER_CMD} tag ${NAMED_BUILD_LATEST} ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
+
+docker_push:
+	@make docker_tag
 	@echo "hub.docker.com upload -- Press Ctl+c within 5 seconds to cancel -- will only work for maintainers"
 	@for i in 5 4 3 2 1; do echo -n "$$i "; sleep 1; done; echo ""
 	@${DOCKER_CMD} push ${DOCKERHUB_REPO}/${BASE_BUILD}
