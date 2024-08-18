@@ -32,11 +32,11 @@ if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$comfy_uid" ]; then
 fi
 
 if [ $do_change == "True" ]; then
-  (sudo addgroup --group --gid ${WANTED_GID} comfytoo || true)
+  (getent group ${WANTED_GID} || (sudo addgroup --group --gid ${WANTED_GID} comfytoo || true))
   sudo adduser --force-badname --disabled-password --gecos '' --uid ${WANTED_UID} --gid ${WANTED_GID} --shell /bin/bash comfytoo
   sudo adduser comfytoo sudo
   sudo chmod 755 /home/comfy
-  sudo chown -R comfytoo:comfytoo /home/comfy/mnt
+  sudo chown -R ${WANTED_UID}:${WANTED_GID} /home/comfy/mnt
 
   # Reload the script to bypass limitation (and exit)
   sudo su comfytoo /home/init.bash && exit
