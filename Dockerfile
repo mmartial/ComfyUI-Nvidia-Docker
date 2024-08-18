@@ -38,6 +38,7 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
     adduser comfy sudo
 RUN cd ${COMFYUI_DIR} && rm -rf user models && ln -s /home/comfy/mnt/user && ln -s /home/comfy/mnt/models 
 RUN echo ${COMFYUI_DIR} > /etc/comfy_dir && chmod 555 /etc/comfy_dir
+RUN echo ${COMFYUI_VERSION} > /etc/comfy_version && chmod 555 /etc/comfy_version
 USER comfy
 RUN cd /home/comfy && mkdir -p mnt/HF mnt/data/input mnt/data/output mnt/data/temp mnt/user mnt/models
 ENV HF_HOME=/home/comfy/mnt/HF

@@ -11,6 +11,9 @@ fi
 COMFY_DIR=`cat /etc/comfy_dir`
 echo "-- COMFY_DIR: \"${COMFY_DIR}\""
 
+COMFY_VERSION=`cat /etc/comfy_version`
+echo "-- ComfyUI version: \"${COMFY_VERSION}\""
+
 # we are running as comfy, see if we need to modify UID/GID
 comfy_uid=`id -u`
 comfy_gid=`id -g`
@@ -57,4 +60,5 @@ done
 
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
 cd ${COMFY_DIR}
+echo "-- ComfyUI version: \"${COMFY_VERSION}\""
 python3 main.py --listen 0.0.0.0 --disable-auto-launch --output-directory /home/comfy/mnt/data/output --temp-directory /home/comfy/mnt/data/temp --input-directory /home/comfy/mnt/data/input
