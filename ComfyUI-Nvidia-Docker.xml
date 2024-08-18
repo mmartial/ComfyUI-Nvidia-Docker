@@ -20,6 +20,16 @@ All those folders will be created with the WANTED_UID and WANTED_GID parameters 
 Note that the base container comes with no weights/models; you need to obtain those and install them in the proper directories under the mount you have selected for the "run" folder.
 
 Output files will be placed into the data/output folder within that "run" folder.
+
+NOTE:
+The first time you run the container, you will get the bottle example.
+This example requires the `v1-5-pruned-emaonly.ckpt` file.
+It is available for example at https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
+The way to get the WebUI to see if is to first put it in the models/checkpoints folder:
+  cd /mnt/user/appdata/comfyui-nvidia/mnt/models/checkpoints
+  wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
+After the download is complete, click "Refresh" on the WebUI and "Queue Prompt"
+
 &#xD;
 Please see https://github.com/mmartial/ComfyUI-Nvidia-Docker for further details.&#xD;
   </Overview>
