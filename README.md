@@ -28,7 +28,8 @@ It is also possible to request a different UID/GID at run time using the `WANTED
 Note: 
 - for details on how to set up a Docker to support an NVIDIA GPU on an Ubuntu 24.04 system, please see [Setting up NVIDIA docker & podman (Ubuntu 24.04)](https://blg.gkr.one/20240404-u24_nvidia_docker_podman/)
 - recommended read: [ComfyUI FLUX examples](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
-- also available: [FLUX.1[dev] with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
+- [FLUX.1[dev] with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
+- [FLUX.1 LoRA training](https://blg.gkr.one/20240818-flux_lora_training/)
 
 ## 1. Running the container
 
