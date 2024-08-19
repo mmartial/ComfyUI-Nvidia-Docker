@@ -13,7 +13,7 @@
   <Overview>
 ComfyUI WebUI Dockerfile with Nvidia support, built from the latest official ComfyUI GitHub release&#xD;
 &#xD;
-The tool will create many directories inside the "run directory": HF, data/{input,output,temp}, user, models/{checkpoints,clip,clip_vision,configs,controlnet,diffusers,embeddings,gligen,hypernetworks,loras,photomaker,style_models,unet,upscale_models,vae,vae_approx}
+The tool will create many directories inside the "run directory": HF, data/{input,output,temp}, user, models/{checkpoints,clip,clip_vision,configs,controlnet,diffusers,embeddings,gligen,hypernetworks,loras,photomaker,style_models,unet,upscale_models,vae,vae_approx}, custom_nodes
 
 All those folders will be created with the WANTED_UID and WANTED_GID parameters (by default using Unraid's default of 99:100) allowing the end-user to place directly into the folders their checkpoints, unet, lora and other required models.
 
