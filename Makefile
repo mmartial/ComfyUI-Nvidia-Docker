@@ -41,7 +41,7 @@ DOCKER_PRE="NVIDIA_VISIBLE_DEVICES=all"
 
 CHECK_EXISTING_BUILD=True
 # Uncomment to attempt to build even if the build already exist (usually uncommented for dev)
-#CHECK_EXISTING_BUILD=False
+CHECK_EXISTING_BUILD=False
 
 DOCKER_BUILD_ARGS=
 #DOCKER_BUILD_ARGS="--no-cache"
