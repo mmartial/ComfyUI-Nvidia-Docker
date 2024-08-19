@@ -53,7 +53,7 @@ if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$new_uid" ]; then echo "Wrong UID (
 
 # This should be the only directory mounted 
 cd /home/comfy/mnt
-for dir in HF data/input data/output data/temp user models/checkpoints models/clip models/clip_vision models/configs models/controlnet models/diffusers models/embeddings models/gligen models/hypernetworks models/loras models/photomaker models/style_models models/unet models/upscale_models models/vae models/vae_approx; do
+for dir in HF data/input data/output data/temp user models/checkpoints models/clip models/clip_vision models/configs models/controlnet models/diffusers models/embeddings models/gligen models/hypernetworks models/loras models/photomaker models/style_models models/unet models/upscale_models models/vae models/vae_approx custom_nodes; do
   if [ ! -d $dir ]; then echo "-- Attempting to create directory $dir"; mkdir -p $dir; fi
   if [ ! -d $dir ]; then echo "** Unable to create directory $dir -- exiting"; exit 1; fi 
 done

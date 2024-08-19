@@ -36,7 +36,11 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
     (addgroup --group --gid ${COMFYUI_GID} comfy || true) && \
     adduser --force-badname --disabled-password --gecos '' --uid ${COMFYUI_UID} --gid ${COMFYUI_GID} --shell /bin/bash comfy && \
     adduser comfy sudo
-RUN cd ${COMFYUI_DIR} && rm -rf user models && ln -s /home/comfy/mnt/user && ln -s /home/comfy/mnt/models 
+RUN cd ${COMFYUI_DIR} \
+  && rm -rf user models custom_nodes \
+  && ln -s /home/comfy/mnt/user \
+  && ln -s /home/comfy/mnt/models \
+  && ln -s /home/comfy/mnt/custom_nodes
 RUN echo ${COMFYUI_DIR} > /etc/comfy_dir && chmod 555 /etc/comfy_dir
 RUN echo ${COMFYUI_VERSION} > /etc/comfy_version && chmod 555 /etc/comfy_version
 USER comfy
