@@ -146,6 +146,7 @@ build_base_actual:
 	@echo "-- Docker command to be run:"
 	@echo "BUILDX_EXPERIMENTAL=1 ${DOCKER_PRE} docker buildx debug --on=error build --progress plain --platform linux/amd64 ${DOCKER_BUILD_ARGS} \\" > ${VAR_NT}.cmd
 	@echo "  --build-arg DOCKER_FROM=\"${BASE_DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
+	@echo "  --build-arg BASE_DOCKER_FROM=\"${BASE_DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --tag=\"${BASE_BUILD}\" \\" >> ${VAR_NT}.cmd
 	@echo "  -f ${BASE_DOCKERFILE} \\" >> ${VAR_NT}.cmd
 	@echo "  ." >> ${VAR_NT}.cmd
