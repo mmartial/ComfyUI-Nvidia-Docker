@@ -43,4 +43,9 @@ RUN apt-get install -y \
       gnupg \
     && apt-get clean
 
+RUN echo "DOCKER_FROM: ${DOCKER_FROM}" | tee /etc/comfy_base.txt
+RUN echo "CUDNN: ${NV_CUDNN_PACKAGE_NAME} (${NV_CUDNN_VERSION}})" | tee -a /etc/comfy_base.txt
+# default SHELL is /bin/sh so date, not printf
+RUN echo -n "BUILD_DATE: UTC "; date +'%Y%m%d_%H%M%S' | tee -a /etc/comfy_base.txt
+
 CMD [ "/bin/bash" ]
