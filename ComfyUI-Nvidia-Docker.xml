@@ -13,25 +13,19 @@
   <Overview>
 ComfyUI WebUI Dockerfile with Nvidia support, built from the latest official ComfyUI GitHub release&#xD;
 &#xD;
-The tool will create many directories inside the "run directory": HF, data/{input,output,temp}, user, models/{checkpoints,clip,clip_vision,configs,controlnet,diffusers,embeddings,gligen,hypernetworks,loras,photomaker,style_models,unet,upscale_models,vae,vae_approx}, custom_nodes
+The tool will create many folders inside the "run directory", among which: HF, data/{input,output,temp}, user, models, custom_nodes
 
 All those folders will be created with the WANTED_UID and WANTED_GID parameters (by default using Unraid's default of 99:100) allowing the end-user to place directly into the folders their checkpoints, unet, lora and other required models.
 
-Note that the base container comes with no weights/models; you need to obtain those and install them in the proper directories under the mount you have selected for the "run" folder.
+The initialization script (run at each restart of the container) will do its best to not overwrite existing files (keeping the most recent -- if you are modifying an existing file, it might be safer to rename it; if a new version appears on Comfy's GitHub, your version might get erased) or remove files that are already in the destination.
 
-Output files will be placed into the data/output folder within that "run" folder.
+Note that the base container comes with no weights/models; you need to obtain those and install them in the proper directories under the mount you have selected for the "run directory".
 
-NOTE:
-The first time you run the container, you will get the bottle example.
-This example requires the `v1-5-pruned-emaonly.ckpt` file.
-It is available for example at https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
-The way to get the WebUI to see if is to first put it in the models/checkpoints folder:
-  cd /mnt/user/appdata/comfyui-nvidia/mnt/models/checkpoints
-  wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
-After the download is complete, click "Refresh" on the WebUI and "Queue Prompt"
+Output files will be placed into the data/output folder within that "run directory".
 
 &#xD;
 Please see https://github.com/mmartial/ComfyUI-Nvidia-Docker for further details.&#xD;
+In particular, details about "First time use" (and the "bottle" workflow), noting that Unraid's default YOUR_RUN_DIRECTORY is /mnt/user/appdata/comfyui-nvidia/mnt
   </Overview>
   <Category>MediaApp:Photos</Category>
   <WebUI>http://[IP]:[PORT:8188]</WebUI>
