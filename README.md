@@ -27,14 +27,18 @@ It is also possible to request a different UID/GID at run time using the `WANTED
 
 Note: 
 - for details on how to set up a Docker to support an NVIDIA GPU on an Ubuntu 24.04 system, please see [Setting up NVIDIA docker & podman (Ubuntu 24.04)](https://blg.gkr.one/20240404-u24_nvidia_docker_podman/)
-- recommended read: [ComfyUI FLUX examples](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
+- If you are new to ComfyUI, a recommended read: [ComfyUI_examples](https://comfyanonymous.github.io/ComfyUI_examples/)
+- [ComfyUI FLUX examples](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
 - [FLUX.1[dev] with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
 - [FLUX.1 LoRA training](https://blg.gkr.one/20240818-flux_lora_training/)
 
 ## 1. Running the container
 
 In the directory where we intend to run the container, **create a `run` folder before running the container** (or give it another name, just be adapt the `-v` mapping in the `docker run` below). That `run` folder will be populated with a few sub-directories created with the UID/GID passed on the command line (see the command line below).
-The folders to be created within `run` are `HF, data/{input,output,temp}, user, models/{checkpoints,clip,clip_vision,configs,controlnet,diffusers,embeddings,gligen,hypernetworks,loras,photomaker,style_models,unet,upscale_models,vae,vae_approx}, custom_nodes`
+
+Among the folders that will be created within `run` are `HF, data/{input,output,temp}, user, models, custom_nodes, comfy_extras`
+
+**The initialization script (run at each restart of the container) will do its best to not overwrite existing files (keeping the most recent -- if you are modifying an existing file, it might be safer to rename it; if a new version appears on Comfy's GitHub, your version might get erased) or remove files that are already in the destination.**
 
 To run the container on an NVIDIA GPU, mounting the specified directory, exposing the port 8188 (change this by altering the `-p local:container` port mapping) and passing the calling user's UID and GID to the container:
 
@@ -43,7 +47,7 @@ docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/home/comfy/mnt -e 
 ```
 
 At first run, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example. Depending on the workflow, and the needed files by the different nodes, some , and find it on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
-For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those before a "Queue Prompt")
+For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". Clicking on the model's filename in the "Checkpoint Loader" will show the list of available files in that folder.
 
 ## 2. Availability on DockerHub
 
