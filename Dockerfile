@@ -36,10 +36,10 @@ ARG COMFYUI_GID=1000
 
 USER root
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends sudo rsync
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-    (addgroup --group --gid ${COMFYUI_GID} comfy || true) && \
-    adduser --force-badname --disabled-password --gecos '' --uid ${COMFYUI_UID} --gid ${COMFYUI_GID} --shell /bin/bash comfy && \
-    adduser comfy sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && (getent group ${COMFYUI_GID} || (sudo addgroup --group --gid ${COMFYUI_GID} comfytoo || true)) \
+    && adduser --force-badname --disabled-password --gecos '' --uid ${COMFYUI_UID} --gid ${COMFYUI_GID} --shell /bin/bash comfy \
+    && adduser comfy sudo
 RUN cd ${COMFYUI_DIR} \
   && ln -s /home/comfy/mnt/user \
   && mv models ${COMFYUI_USERDIR}/. && ln -s /home/comfy/mnt/models \
@@ -61,6 +61,6 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 
 EXPOSE 8188
 
-COPY --chown=comfy:comfy --chmod=555 init.bash /home/init.bash
+COPY --chown=${COMFYUI_UID}:${COMFYUI_GID} --chmod=555 init.bash /home/init.bash
 
 CMD [ "/home/init.bash" ]
