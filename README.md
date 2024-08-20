@@ -4,6 +4,7 @@
 With the recent addition of a [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/), I created this container builder to test it.
 
 - [1. Running the container](#1-running-the-container)
+  - [1.1. First time use](#11-first-time-use)
 - [2. Availability on DockerHub](#2-availability-on-dockerhub)
 - [3. Unraid availability](#3-unraid-availability)
 - [4. Screenshots](#4-screenshots)
@@ -46,8 +47,27 @@ To run the container on an NVIDIA GPU, mounting the specified directory, exposin
 docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/home/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 mmartial/comfyui-nvidia-docker:latest
 ```
 
-At first run, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example. Depending on the workflow, and the needed files by the different nodes, some , and find it on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
-For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". Clicking on the model's filename in the "Checkpoint Loader" will show the list of available files in that folder.
+### 1.1. First time use
+
+The first time you run the container, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example.
+
+This example requires the `v1-5-pruned-emaonly.ckpt` file.
+
+It is available for example at https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
+
+The way to get the WebUI to see if is to first put it in the `models/checkpoints` folder:
+
+```bash
+cd <YOUR_RUN_DIRECTORY>/models/checkpoints
+wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
+```
+
+After the download is complete, click "Refresh" on the WebUI and "Queue Prompt"
+
+Depending on the workflow, and the needed files by the different nodes, some can be found on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
+
+For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". 
+Clicking on the model's filename in the "Checkpoint Loader" will show the list of available files in that folder.
 
 ## 2. Availability on DockerHub
 
