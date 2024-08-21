@@ -3,13 +3,17 @@
   <Name>ComfyUI-Nvidia-Docker</Name>
   <Repository>mmartial/comfyui-nvidia-docker</Repository>
   <Registry>https://hub.docker.com/r/mmartial/comfyui-nvidia-docker</Registry>
+  <Support>https://forums.unraid.net/topic/172874-support-comfyui-nvidia-docker/</Support>
+  <Project>https://github.com/mmartial/ComfyUI-Nvidia-Docker</Project>
+  <TemplateURL>https://raw.githubusercontent.com/mmartial/ComfyUI-Nvidia-Docker/main/ComfyUI-Nvidia-Docker.xml</TemplateURL>
+  <Icon>https://avatars.githubusercontent.com/u/121283862</Icon>
+  <Category>AI: MediaApp:Photos</Category>
+  <ExtraSearchTerms>WebUI images generation Stable Diffusion</ExtraSearchTerms>
   <Network>bridge</Network>
   <Requires>**Nvidia Driver plugin**</Requires>
   <MyIP/>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>https://forums.unraid.net/topic/172874-support-comfyui-nvidia-docker/</Support>
-  <Project>https://github.com/mmartial/ComfyUI-Nvidia-Docker</Project>
   <Overview>
 ComfyUI WebUI Dockerfile with Nvidia support, built from the latest official ComfyUI GitHub release&#xD;
 &#xD;
@@ -26,11 +30,11 @@ Output files will be placed into the data/output folder within that "run directo
 &#xD;
 Please see https://github.com/mmartial/ComfyUI-Nvidia-Docker for further details.&#xD;
 In particular, details about "First time use" (and the "bottle" workflow), noting that Unraid's default YOUR_RUN_DIRECTORY is /mnt/user/appdata/comfyui-nvidia/mnt
+
+&#xD;
+Note: This is a WebUI for the ComfyUI Stable Diffusion tool with a Docker image which is over 10GB.
   </Overview>
-  <Category>MediaApp:Photos</Category>
   <WebUI>http://[IP]:[PORT:8188]</WebUI>
-  <TemplateURL/>
-  <Icon>https://avatars.githubusercontent.com/u/121283862</Icon>
   <ExtraParams>--gpus all</ExtraParams>
   <PostArgs/>
   <CPUset/>
