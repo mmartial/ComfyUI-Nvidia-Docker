@@ -26,7 +26,7 @@ if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 COMFY_USERDIR=`cat $it`
 if test -z ${COMFY_USERDIR}; then error_exit "Empty COMFY_USERDIR variable"; fi
 echo "-- Content directory: \"${COMFY_USERDIR}\""
-find ${COMFY_USERDIR} -type f -exec ls -l {} \;
+#find ${COMFY_USERDIR} -type f -exec ls -l {} \;
 
 
 it=/etc/comfy_version
@@ -79,7 +79,26 @@ sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_USERDIR}
 # rsync the prepared directory, doing its best to not overwrite existing files (using "update" keep the most recent) or remove files that are already in the destination
 rsync -avRuh  ${COMFY_USERDIR}/./* /home/comfy/mnt/. || error_exit "rsync failed"
 
+# virtualenv for custom installs
+cd /home/comfy/mnt
+if [ ! -d "venv" ]; then
+  python3 -m venv --system-site-packages venv 
+fi
+if [ ! -f venv/bin/activate ]; then error_exit "Virtualenv not created, please erase any venv directory"; fi
+
+# Activate the virtualenv and upgrade pip
+source /home/comfy/mnt/venv/bin/activate
+pip3 install --upgrade pip
+echo -n "PATH: "; echo $PATH
+echo -n "Python version: "; python3 --version
+echo -n "Pip version: "; pip3 --version
+echo -n "python bin: "; which python3
+echo -n "pip bin: "; which pip3
+echo -n "git bin: "; which git
+
+
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
+sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_DIR}
 cd ${COMFY_DIR}
 echo "-- ComfyUI version: \"${COMFY_VERSION}\""
 python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /home/comfy/mnt/data/temp
