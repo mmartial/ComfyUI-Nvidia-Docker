@@ -22,6 +22,9 @@ BASE_DOCKER_FROM=nvidia/cuda:12.3.2-runtime-ubuntu22.04
 BASE_DOCKERFILE=Dockerfile-base
 BASE_DATE=$(shell printf '%(%Y%m%d)T' -1)
 
+BASE_DOCKER_BUILD_ARGS=
+#BASE_DOCKER_BUILD_ARGS="--no-cache"
+
 # ComfyUI container build "FROM" the BASE container
 COMFYUI_CONTAINER_NAME=comfyui-nvidia-docker
 NAMED_BUILD=${COMFYUI_CONTAINER_NAME}:${COMFYUI_VERSION}
@@ -45,6 +48,7 @@ CHECK_EXISTING_BUILD=False
 
 DOCKER_BUILD_ARGS=
 #DOCKER_BUILD_ARGS="--no-cache"
+
 
 VERBOSE_PRINT=False
 # Uncomment to see the process
@@ -144,7 +148,7 @@ endif
 build_base_actual:
 	@VERB="base: actual build" make verbose_print
 	@echo "-- Docker command to be run:"
-	@echo "BUILDX_EXPERIMENTAL=1 ${DOCKER_PRE} docker buildx debug --on=error build --progress plain --platform linux/amd64 ${DOCKER_BUILD_ARGS} \\" > ${VAR_NT}.cmd
+	@echo "BUILDX_EXPERIMENTAL=1 ${DOCKER_PRE} docker buildx debug --on=error build --progress plain --platform linux/amd64 ${BASE_DOCKER_BUILD_ARGS} \\" > ${VAR_NT}.cmd
 	@echo "  --build-arg DOCKER_FROM=\"${BASE_DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --build-arg BASE_DOCKER_FROM=\"${BASE_DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --tag=\"${BASE_BUILD}\" \\" >> ${VAR_NT}.cmd
