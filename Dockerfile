@@ -4,6 +4,7 @@ FROM ${DOCKER_FROM}
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y --fix-missing \
   && apt-get upgrade -y \
+  && apt-get install -y rsync python3-venv git \
   && apt-get clean
 
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
@@ -22,7 +23,9 @@ RUN wget -q -O /tmp/get-pip.py --no-check-certificate https://bootstrap.pypa.io/
   && pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U pip \
   && rm /tmp/get-pip.py
 
-RUN wget -q https://github.com/comfyanonymous/ComfyUI/archive/refs/tags/v${COMFYUI_VERSION}.tar.gz -O - | tar --strip-components=1 -xz -C ${COMFYUI_DIR} \
+# Need git for ComfyUI Manager
+#RUN wget -q https://github.com/comfyanonymous/ComfyUI/archive/refs/tags/v${COMFYUI_VERSION}.tar.gz -O - | tar --strip-components=1 -xz -C ${COMFYUI_DIR} \
+RUN git clone --depth 1 --branch v${COMFYUI_VERSION} https://github.com/comfyanonymous/ComfyUI.git ${COMFYUI_DIR} \
     && cd ${COMFYUI_DIR} \
     && pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt \
     && pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U "huggingface_hub[cli]" \
@@ -36,7 +39,7 @@ ARG COMFYUI_GID=1000
 
 USER root
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends sudo rsync python3-venv git
+    && apt-get install -y --no-install-recommends sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && (getent group ${COMFYUI_GID} || (sudo addgroup --group --gid ${COMFYUI_GID} comfytoo || true)) \
     && adduser --force-badname --disabled-password --gecos '' --uid ${COMFYUI_UID} --gid ${COMFYUI_GID} --shell /bin/bash comfy \
