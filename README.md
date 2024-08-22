@@ -11,6 +11,7 @@ With the recent addition of a [Flux example](https://comfyanonymous.github.io/Co
   - [4.1. First run: Bottle image](#41-first-run-bottle-image)
   - [4.2. FLUX.1\[dev\] example](#42-flux1dev-example)
 - [5. Building the container](#5-building-the-container)
+  - [Nvidia base container](#nvidia-base-container)
 
 <h2>Preamble</h2>
 
@@ -107,3 +108,13 @@ make local
 
 The "base" image uses `Dockerfile-base` while the final image `Dockerfile`.
 Feel free to modify either as needed.
+
+### Nvidia base container
+
+Note that the original `Dockerfile` `FROM` is from Nvidia, as such:
+
+```
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+```
