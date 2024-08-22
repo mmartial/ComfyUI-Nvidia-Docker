@@ -34,37 +34,42 @@ RUN git clone --depth 1 --branch v${COMFYUI_VERSION} https://github.com/comfyano
 # Create a local comfy user and prepare a directory with ComfyUI's own directories ready to copy to the end user
 ENV COMFYUI_USERDIR="/ComfyUI-user"
 RUN mkdir -p ${COMFYUI_USERDIR}/data/temp ${COMFYUI_USERDIR}/HF ${COMFYUI_USERDIR}/user
-ARG COMFYUI_UID=1000
-ARG COMFYUI_GID=1000
 
+ENV COMFYUSER_DIR="/comfy"
+ENV COMFYMNT_DIR="${COMFYUSER_DIR}/mnt"
 USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-    && (getent group ${COMFYUI_GID} || (sudo addgroup --group --gid ${COMFYUI_GID} comfytoo || true)) \
-    && adduser --force-badname --disabled-password --gecos '' --uid ${COMFYUI_UID} --gid ${COMFYUI_GID} --shell /bin/bash comfy \
-    && adduser comfy sudo
+    && useradd -u 1024 -U -d ${COMFYUSER_DIR} -s /bin/bash -m comfy \
+    && usermod -G users comfy \
+    && adduser comfy sudo \
+    && test -d ${COMFYUSER_DIR}
 RUN cd ${COMFYUI_DIR} \
-  && ln -s /home/comfy/mnt/user \
-  && mv models ${COMFYUI_USERDIR}/. && ln -s /home/comfy/mnt/models \
-  && mv custom_nodes ${COMFYUI_USERDIR}/. && ln -s /home/comfy/mnt/custom_nodes \
-  && mv input ${COMFYUI_USERDIR}/data/. && ln -s /home/comfy/mnt/data/input \
-  && mv output ${COMFYUI_USERDIR}/data/. && ln -s /home/comfy/mnt/data/output \
-  && mv comfy_extras ${COMFYUI_USERDIR}/. && ln -s /home/comfy/mnt/comfy_extras
+  && ln -s ${COMFYMNT_DIR}/user \
+  && mv models ${COMFYUI_USERDIR}/. && ln -s ${COMFYMNT_DIR}/models \
+  && mv custom_nodes ${COMFYUI_USERDIR}/. && ln -s ${COMFYMNT_DIR}/custom_nodes \
+  && mv input ${COMFYUI_USERDIR}/data/. && ln -s ${COMFYMNT_DIR}/data/input \
+  && mv output ${COMFYUI_USERDIR}/data/. && ln -s ${COMFYMNT_DIR}/data/output \
+  && mv comfy_extras ${COMFYUI_USERDIR}/. && ln -s ${COMFYMNT_DIR}/comfy_extras
 
-RUN echo ${COMFYUI_DIR} > /etc/comfy_dir && chmod 555 /etc/comfy_dir
-RUN echo ${COMFYUI_USERDIR} > /etc/comfy_userdir && chmod 555 /etc/comfy_userdir
-RUN echo ${COMFYUI_VERSION} > /etc/comfy_version && chmod 555 /etc/comfy_version
-RUN echo -n "BUILD_DATE: UTC " | tee /etc/comfy_main.txt; date +'%Y%m%d_%H%M%S' | tee -a /etc/comfy_main.txt
+RUN it="/etc/comfyuser_dir"; echo ${COMFYUSER_DIR} > $it && chmod 555 $it
 
 USER comfy
-RUN cd /home/comfy && mkdir -p mnt/HF
-ENV HF_HOME=/home/comfy/mnt/HF
+RUN it="${COMFYUSER_DIR}/comfymnt_dir"; echo ${COMFYMNT_DIR} > $it && chmod 555 $it
+RUN it="${COMFYUSER_DIR}/comfy_dir"; echo ${COMFYUI_DIR} > $it && chmod 555 $it
+RUN it="${COMFYUSER_DIR}/comfy_userdir"; echo ${COMFYUI_USERDIR} > $it && chmod 555 $it
+RUN it="${COMFYUSER_DIR}/comfy_version"; echo ${COMFYUI_VERSION} > $it && chmod 555 $it
+RUN echo -n "BUILD_DATE: UTC " | tee ${COMFYUSER_DIR}/comfy_main.txt; date +'%Y%m%d_%H%M%S' | tee -a ${COMFYUSER_DIR}/comfy_main.txt
+
+RUN sudo chown -R comfy:comfy ${COMFYUI_USERDIR}
+RUN cd ${COMFYUI_USERDIR} && mkdir -p HF
+ENV HF_HOME=${COMFYUI_USERDIR}/HF
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 
 EXPOSE 8188
 
-COPY --chown=${COMFYUI_UID}:${COMFYUI_GID} --chmod=555 init.bash /home/init.bash
+COPY --chown=comfy:comfy --chmod=555 init.bash comfyui-nvidia-docker_init.bash
 
-CMD [ "/home/init.bash" ]
+CMD [ "./comfyui-nvidia-docker_init.bash" ]

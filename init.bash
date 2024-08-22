@@ -7,29 +7,45 @@ error_exit() {
   exit 1
 }
 
+script_dir=$(dirname $0)
+script_name=$(basename $0)
+echo "== Running ${script_name} in ${script_dir}"
+script_fullname=$0
+
 it=/etc/comfy_base.txt
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 echo "-- Base image details (from $it):"; cat $it
 
-it=/etc/comfy_main.txt
+it=/etc/comfyuser_dir
+if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
+COMFYUSER_DIR=`cat $it`
+echo "-- COMFYUIUSER_DIR: \"${COMFYUSER_DIR}\""
+if test -z ${COMFYUSER_DIR}; then error_exit "Empty COMFYUSER_DIR variable"; fi
+
+it=${COMFYUSER_DIR}/comfy_main.txt
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 echo "-- Main image details (from $it):"; cat $it
 
-it=/etc/comfy_dir
+it=${COMFYUSER_DIR}/comfy_dir
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 COMFY_DIR=`cat $it`
 echo "-- COMFY_DIR: \"${COMFY_DIR}\""
 if test -z ${COMFY_DIR}; then error_exit "Empty COMFY_DIR variable"; fi
 
-it=/etc/comfy_userdir
+it=${COMFYUSER_DIR}/comfymnt_dir
+if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
+COMFYMNT_DIR=`cat $it`
+echo "-- COMFYMNT_DIR: \"${COMFYMNT_DIR}\""
+if test -z ${COMFYMNT_DIR}; then error_exit "Empty COMFYMNT_DIR variable"; fi
+
+it=${COMFYUSER_DIR}/comfy_userdir
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 COMFY_USERDIR=`cat $it`
 if test -z ${COMFY_USERDIR}; then error_exit "Empty COMFY_USERDIR variable"; fi
 echo "-- Content directory: \"${COMFY_USERDIR}\""
 #find ${COMFY_USERDIR} -type f -exec ls -l {} \;
 
-
-it=/etc/comfy_version
+it=${COMFYUSER_DIR}/comfy_version
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 COMFY_VERSION=`cat $it`
 if test -z ${COMFY_VERSION}; then error_exit "Empty COMFY_VERSION variable"; fi
@@ -40,30 +56,28 @@ comfy_uid=`id -u`
 comfy_gid=`id -g`
 
 do_change="False"
-# Not checking the validity (or security) of passed WANTED_ value
 
-do_gid="False"
 if [ ! -z "$WANTED_GID" -a "$WANTED_GID" != "$comfy_gid" ]; then
   echo "-- Will attempt to create a new user with GID ${WANTED_GID}"
   do_change="True"
-  do_gid="True"
 fi
-do_uid="False"
 if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$comfy_uid" ]; then
   echo "-- Will attempt to create a new user with UID ${WANTED_UID}"
   do_change="True"
-  do_uid="True"
 fi
 
 if [ $do_change == "True" ]; then
+  # Make a "comfytoo" user
+  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFYUSER_DIR}
   (getent group ${WANTED_GID} || (sudo addgroup --group --gid ${WANTED_GID} comfytoo || true))
-  sudo adduser --force-badname --disabled-password --gecos '' --uid ${WANTED_UID} --gid ${WANTED_GID} --shell /bin/bash comfytoo
+  sudo useradd -u ${WANTED_UID} -o -g ${WANTED_GID} -s /bin/bash -d ${COMFYUSER_DIR} -M comfytoo
   sudo adduser comfytoo sudo
-  sudo chmod 755 /home/comfy
-  sudo chown -R ${WANTED_UID}:${WANTED_GID} /home/comfy/mnt
-
+  # change the source directory owned by the expected UID/GID
+  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFYMNT_DIR}
+  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_USERDIR}
+  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_DIR}
   # Reload the script to bypass limitation (and exit)
-  sudo su comfytoo /home/init.bash && exit
+  sudo su comfytoo $script_fullname && exit
 fi
 
 new_gid=`id -g`
@@ -72,22 +86,20 @@ echo "== user -- uid: $new_uid / gid: $new_gid"
 if [ ! -z "$WANTED_GID" -a "$WANTED_GID" != "$new_gid" ]; then echo "Wrong GID ($new_gid), exiting"; exit 0; fi
 if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$new_uid" ]; then echo "Wrong UID ($new_uid), exiting"; exit 0; fi
 
-# Make the rsync source directory owned by the expected UID/GID
-sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_USERDIR}
 
-# /home/comfy/mnt/ is mounted to the `docker run [...] -v` and is the only directory we should write to 
+# ${COMFYMNT_DIR} is mounted to the `docker run [...] -v` and is the only directory we should write to 
 # rsync the prepared directory, doing its best to not overwrite existing files (using "update" keep the most recent) or remove files that are already in the destination
-rsync -avRuh  ${COMFY_USERDIR}/./* /home/comfy/mnt/. || error_exit "rsync failed"
+rsync -avRuh  ${COMFY_USERDIR}/./* ${COMFYMNT_DIR}/. || error_exit "rsync failed"
 
 # virtualenv for custom installs
-cd /home/comfy/mnt
+cd ${COMFYMNT_DIR}
 if [ ! -d "venv" ]; then
   python3 -m venv --system-site-packages venv 
 fi
-if [ ! -f venv/bin/activate ]; then error_exit "Virtualenv not created, please erase any venv directory"; fi
 
 # Activate the virtualenv and upgrade pip
-source /home/comfy/mnt/venv/bin/activate
+if [ ! -f ${COMFYMNT_DIR}/venv/bin/activate ]; then error_exit "Virtualenv not created, please erase any venv directory"; fi
+source ${COMFYMNT_DIR}/venv/bin/activate
 pip3 install --upgrade pip
 echo -n "PATH: "; echo $PATH
 echo -n "Python version: "; python3 --version
@@ -96,9 +108,7 @@ echo -n "python bin: "; which python3
 echo -n "pip bin: "; which pip3
 echo -n "git bin: "; which git
 
-
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
-sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_DIR}
 cd ${COMFY_DIR}
 echo "-- ComfyUI version: \"${COMFY_VERSION}\""
 python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /home/comfy/mnt/data/temp
