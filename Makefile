@@ -33,13 +33,6 @@ NAMED_BUILD_LATEST=${COMFYUI_CONTAINER_NAME}:latest
 DOCKERFILE=Dockerfile
 DOCKER_FROM=${BASE_BUILD_LATEST}
 
-# UID and GID are obtained from the user building the image
-COMFYUI_UID=`id -u`
-COMFYUI_GID=`id -g`
-# or can be set manually
-#COMFYUI_UID=1000
-#COMFYUI_GID=1000
-
 DOCKER_PRE="NVIDIA_VISIBLE_DEVICES=all"
 
 CHECK_EXISTING_BUILD=True
@@ -61,7 +54,7 @@ all:
 	@echo ""
 	@echo "** Available Docker images to be built (make targets):"
 	@echo "base:           builds ${BASE_BUILD} and tags it as ${BASE_BUILD_LATEST}"
-	@echo "local:          builds ${NAMED_BUILD} (to be run as uid: ${COMFYUI_UID} / gid: ${COMFYUI_GID}) and tags it as ${NAMED_BUILD_LATEST} (requires base)"
+	@echo "local:          builds ${NAMED_BUILD} and tags it as ${NAMED_BUILD_LATEST} (requires base)"
 	@echo ""
 	@echo "build:          builds local"
 
@@ -173,7 +166,7 @@ build:
 local:
 	@make base
 	@make check_comfy_version
-	@VAR_NT=${COMFYUI_CONTAINER_NAME}-${COMFYUI_VERSION} USED_UID=${COMFYUI_UID} USED_GID=${COMFYUI_GID} USED_BUILD=${NAMED_BUILD} USED_BUILD_LATEST=${NAMED_BUILD_LATEST} make build_main_check
+	@VAR_NT=${COMFYUI_CONTAINER_NAME}-${COMFYUI_VERSION} USED_BUILD=${NAMED_BUILD} USED_BUILD_LATEST=${NAMED_BUILD_LATEST} make build_main_check
 
 
 build_main_check:
@@ -197,8 +190,6 @@ build_main_actual:
 	@echo "BUILDX_EXPERIMENTAL=1 ${DOCKER_PRE} docker buildx debug --on=error build --progress plain --platform linux/amd64 ${DOCKER_BUILD_ARGS} \\" > ${VAR_NT}.cmd
 	@echo "  --build-arg DOCKER_FROM=\"${DOCKER_FROM}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --build-arg COMFYUI_VERSION=\"${COMFYUI_VERSION}\" \\" >> ${VAR_NT}.cmd
-	@echo "  --build-arg COMFYUI_UID=\"${USED_UID}\" \\" >> ${VAR_NT}.cmd
-	@echo "  --build-arg COMFYUI_GID=\"${USED_GID}\" \\" >> ${VAR_NT}.cmd
 	@echo "  --tag=\"${USED_BUILD}\" \\" >> ${VAR_NT}.cmd
 	@echo "  -f ${DOCKERFILE} \\" >> ${VAR_NT}.cmd
 	@echo "  ." >> ${VAR_NT}.cmd

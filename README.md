@@ -17,14 +17,14 @@ With the recent addition of a [Flux example](https://comfyanonymous.github.io/Co
 The `Makefile` will attempt to find the latest published release on GitHub and automatically propose to build this version.
 It is also possible to manually set the version, by modifying the `Makefile` and adapting the `COMFY_VERSION` variable. 
 
-This build is also set to not run internally as the `root` user, but run as a user whose UID and GID are copied from the container building user' own `uid` and `gid` (it is also possible to request a different UID/GID at `docker run` time).
+This build is also set to not run internally as the `root` user, but run the requested UID/GID at `docker run` time.
 This is done to a allow end users to have local directory structures for all the side data (input, output, temp, user), Hugging Face `HF_HOME` if used, and the entire `models` being separate from the running container and able to be altered by the user.
 
 The tag for the ComfyUI container image is obtained from the latest official release from GitHub.
 The tag for the base image is based on Today's date.
 Note that a `docker buildx prune -f` might be needed to force a clean build after removing already existing containers.
 
-It is also possible to request a different UID/GID at run time using the `WANTED_UID` and `WANTED_GID` environment variables when calling the container.
+To request a different UID/GID at run time use the `WANTED_UID` and `WANTED_GID` environment variables when calling the container.
 
 Note: 
 - for details on how to set up a Docker to support an NVIDIA GPU on an Ubuntu 24.04 system, please see [Setting up NVIDIA docker & podman (Ubuntu 24.04)](https://blg.gkr.one/20240404-u24_nvidia_docker_podman/)
