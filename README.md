@@ -44,7 +44,7 @@ Among the folders that will be created within `run` are `HF, data/{input,output,
 To run the container on an NVIDIA GPU, mounting the specified directory, exposing the port 8188 (change this by altering the `-p local:container` port mapping) and passing the calling user's UID and GID to the container:
 
 ```bash
-docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/home/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 mmartial/comfyui-nvidia-docker:latest
+docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 mmartial/comfyui-nvidia-docker:latest
 ```
 
 ### 1.1. First time use
