@@ -111,4 +111,4 @@ echo -n "git bin: "; which git
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
 cd ${COMFY_DIR}
 echo "-- ComfyUI version: \"${COMFY_VERSION}\""
-python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /home/comfy/mnt/data/temp
+python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data/temp
