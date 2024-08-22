@@ -35,7 +35,8 @@ ARG COMFYUI_UID=1000
 ARG COMFYUI_GID=1000
 
 USER root
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends sudo rsync
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends sudo rsync python3-venv git
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && (getent group ${COMFYUI_GID} || (sudo addgroup --group --gid ${COMFYUI_GID} comfytoo || true)) \
     && adduser --force-badname --disabled-password --gecos '' --uid ${COMFYUI_UID} --gid ${COMFYUI_GID} --shell /bin/bash comfy \
