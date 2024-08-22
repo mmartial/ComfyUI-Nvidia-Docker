@@ -11,7 +11,7 @@ With the recent addition of a [Flux example](https://comfyanonymous.github.io/Co
   - [4.1. First run: Bottle image](#41-first-run-bottle-image)
   - [4.2. FLUX.1\[dev\] example](#42-flux1dev-example)
 - [5. Building the container](#5-building-the-container)
-  - [Nvidia base container](#nvidia-base-container)
+  - [5.1. Nvidia base container](#51-nvidia-base-container)
 
 <h2>Preamble</h2>
 
@@ -109,7 +109,7 @@ make local
 The "base" image uses `Dockerfile-base` while the final image `Dockerfile`.
 Feel free to modify either as needed.
 
-### Nvidia base container
+### 5.1. Nvidia base container
 
 Note that the original `Dockerfile` `FROM` is from Nvidia, as such:
 
