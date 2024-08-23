@@ -4,17 +4,19 @@
 With the recent addition of a [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/), I created this container builder to test it.
 
 - [1. Running the container](#1-running-the-container)
-  - [1.1. First time use](#11-first-time-use)
-- [2. Availability on DockerHub](#2-availability-on-dockerhub)
-- [3. Unraid availability](#3-unraid-availability)
-- [4. Screenshots](#4-screenshots)
-  - [4.1. First run: Bottle image](#41-first-run-bottle-image)
-  - [4.2. FLUX.1\[dev\] example](#42-flux1dev-example)
-- [5. Building the container](#5-building-the-container)
-  - [5.1. Nvidia base container](#51-nvidia-base-container)
-- [6. FAQ](#6-faq)
-  - [6.1. Virtualenv](#61-virtualenv)
-  - [6.2. ComfyUI Manager](#62-comfyui-manager)
+  - [1.1. Docker compose](#11-docker-compose)
+  - [1.2. First time use](#12-first-time-use)
+- [2. Docker image](#2-docker-image)
+  - [2.1. Building the image](#21-building-the-image)
+  - [2.2. Availability on DockerHub](#22-availability-on-dockerhub)
+  - [2.3. Unraid availability](#23-unraid-availability)
+  - [2.4. Nvidia base container](#24-nvidia-base-container)
+- [3. Screenshots](#3-screenshots)
+  - [3.1. First run: Bottle image](#31-first-run-bottle-image)
+  - [3.2. FLUX.1\[dev\] example](#32-flux1dev-example)
+- [4. FAQ](#4-faq)
+  - [4.1. Virtualenv](#41-virtualenv)
+  - [4.2. ComfyUI Manager](#42-comfyui-manager)
 
 <h2>Preamble</h2>
 
@@ -51,7 +53,44 @@ To run the container on an NVIDIA GPU, mounting the specified directory, exposin
 docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 --name comfyui-nvidia mmartial/comfyui-nvidia-docker:latest
 ```
 
-### 1.1. First time use
+### 1.1. Docker compose
+
+In the directory where you want to run the compose stack, create the `compose.yaml` file with the following content:
+
+```yaml
+services:
+  comfyui-nvidia-docker:
+    image: mmartial/comfyui-nvidia-docker:latest
+    container_name: comfyui-nvidia
+    ports:
+      - 8188:8188
+    volumes:
+      - ./run:/comfy/mnt
+    restart: unless-stopped
+    environment:
+      - WANTED_UID=1000
+      - WANTED_GID=1000
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+                - compute
+                - utility
+```
+
+This will expose on port 8188 (host:container), use a `run` directory local to the directory where this `compose.yml`  is, and specify the `WANTED_UID` and `WANTED_GID` to 1000 (adapt as needed).
+
+Start it with `docker compose up` (with `-detached` to run the container in the background)
+
+Please see [docker compose up](https://docs.docker.com/reference/cli/docker/compose/up/) reference manual for additional details.
+
+### 1.2. First time use
 
 The first time you run the container, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example.
 
@@ -73,30 +112,9 @@ Depending on the workflow, and the needed files by the different nodes, some can
 For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". 
 Clicking on the model's filename in the "Checkpoint Loader" will show the list of available files in that folder.
 
-## 2. Availability on DockerHub
+## 2. Docker image
 
-Builds are available on DockerHub:
-- [mmartial/comfyui-nvidia-docker](https://hub.docker.com/r/mmartial/comfyui-nvidia-docker), the ComfyUI pre-built image generated from the file in this repository's `Dockerfile`.
-- [mmartial/comfyui-nvidia-base](https://hub.docker.com/r/mmartial/comfyui-nvidia-base), the base container that is used by the ComfyUI image. This image is published as it can be useful being a Ubuntu 22.04 with Nvidia components installed. For details on what is incorporated, please see the `Dockerfile-base` file.
-
-## 3. Unraid availability
-
-The container has been tested on Unraid.
-I will update this when it has been added to the Community Apps.
-
-## 4. Screenshots
-
-### 4.1. First run: Bottle image
-
-![First Run](assets/FirstRun.png)
-
-### 4.2. FLUX.1[dev] example
-
-Template at [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
-
-![Flux Dev example](assets/Flux1Dev-run.png)
-
-## 5. Building the container
+### 2.1. Building the image
 
 The `comfyui-nvidia-base` (`base`) image contains the prerequisites to enable a ComfyUI installation from its latest release from GitHub.
 
@@ -112,7 +130,20 @@ make local
 The "base" image uses `Dockerfile-base` while the final image `Dockerfile`.
 Feel free to modify either as needed.
 
-### 5.1. Nvidia base container
+### 2.2. Availability on DockerHub
+
+Builds are available on DockerHub:
+- [mmartial/comfyui-nvidia-docker](https://hub.docker.com/r/mmartial/comfyui-nvidia-docker), the ComfyUI pre-built image generated from the file in this repository's `Dockerfile`.
+- [mmartial/comfyui-nvidia-base](https://hub.docker.com/r/mmartial/comfyui-nvidia-base), the base container that is used by the ComfyUI image. This image is published as it can be useful being a Ubuntu 22.04 with Nvidia components installed. For details on what is incorporated, please see the `Dockerfile-base` file.
+
+### 2.3. Unraid availability
+
+The container has been tested on Unraid.
+I will update this when it has been added to the Community Apps.
+For the time being, if interested, you can see the template from https://raw.githubusercontent.com/mmartial/unraid-templates/main/templates/ComfyUI-Nvidia-Docker.xml
+
+
+### 2.4. Nvidia base container
 
 Note that the original `Dockerfile` `FROM` is from Nvidia, as such:
 
@@ -122,15 +153,27 @@ By pulling and using the container, you accept the terms and conditions of this 
 https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
 ```
 
-## 6. FAQ
+## 3. Screenshots
 
-### 6.1. Virtualenv
+### 3.1. First run: Bottle image
+
+![First Run](assets/FirstRun.png)
+
+### 3.2. FLUX.1[dev] example
+
+Template at [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
+
+![Flux Dev example](assets/Flux1Dev-run.png)
+
+## 4. FAQ
+
+### 4.1. Virtualenv
 
 The container pip installs all required packages to the container, then creates a virtualenv (in `/comfy/mnt/venv` with `comfy/mnt` being mounted with the `docker run [...] -v`). 
 This allows for installations of python packages using `pip3 install` after running `docker exec -t comfy-nvidia /bin/bash` and from the provided `bash` prompt activating the `venv` with `source /comfy/mnt/venv/bin/activate`.
 From the `bash` prompt you can run `pip3 freeze` or other `pip3` commands such as `pip3 install civitai`
 
-### 6.2. ComfyUI Manager
+### 4.2. ComfyUI Manager
 
 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager/) can be installed to be available in the container.
 The `/comfy/mnt` directory is mounted using the `docker run [...] -v`.
