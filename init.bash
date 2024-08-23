@@ -7,10 +7,37 @@ error_exit() {
   exit 1
 }
 
+whoami=`whoami`
 script_dir=$(dirname $0)
 script_name=$(basename $0)
-echo "== Running ${script_name} in ${script_dir}"
+echo "== Running ${script_name} in ${script_dir} as ${whoami}"
 script_fullname=$0
+cmd_wuid=$1
+cmd_wgid=$2
+
+if [ -z "$WANTED_UID" ]; then
+  WANTED_UID=$cmd_wuid
+fi
+if [ -z "$WANTED_GID" ]; then
+  WANTED_GID=$cmd_wgid
+fi
+if [ -z "$WANTED_UID" ]; then
+  error_exit "Missing WANTED_UID"
+fi
+if [ -z "$WANTED_GID" ]; then
+  error_exit "Missing WANTED_GID"
+fi
+
+# The script is started as comfy
+# if the UID/GID are not correct, we create a new comfytoo user with the correct UID/GID which will restart the script
+# after the script restart we restart again as comfy
+if [ "A${whoami}" == "Acomfytoo" ]; then 
+  echo "Not running as comfy, will try to switch to comfy (Docker USER)"
+  # Make the comfy user (the Docker USER) have the proper UID/GID as well
+  sudo usermod -u ${WANTED_UID} -o -g ${WANTED_GID} comfy
+  # restart the script as comfy (Docker USER) with the correct UID/GID this time
+  sudo su comfy $script_fullname $WANTED_UID $WANTED_GID && exit
+fi
 
 it=/etc/comfy_base.txt
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
@@ -77,7 +104,7 @@ if [ $do_change == "True" ]; then
   sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_USERDIR}
   sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_DIR}
   # Reload the script to bypass limitation (and exit)
-  sudo su comfytoo $script_fullname && exit
+  sudo su comfytoo $script_fullname ${WANTED_UID} ${WANTED_GID} && exit
 fi
 
 new_gid=`id -g`
@@ -111,4 +138,4 @@ echo -n "git bin: "; which git
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
 cd ${COMFY_DIR}
 echo "-- ComfyUI version: \"${COMFY_VERSION}\""
-python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data/temp
+python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data
