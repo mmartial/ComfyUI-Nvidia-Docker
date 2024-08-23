@@ -72,6 +72,8 @@ EXPOSE 8188
 
 COPY --chown=comfy:comfy --chmod=555 init.bash comfyui-nvidia-docker_init.bash
 
+ENV COMFYUI_PATH=${COMFYUI_DIR}
+
 LABEL comfyui-nvidia-docker=${COMFYUI_VERSION}
 
 CMD [ "./comfyui-nvidia-docker_init.bash" ]

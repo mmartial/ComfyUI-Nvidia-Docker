@@ -32,7 +32,7 @@ fi
 # if the UID/GID are not correct, we create a new comfytoo user with the correct UID/GID which will restart the script
 # after the script restart we restart again as comfy
 if [ "A${whoami}" == "Acomfytoo" ]; then 
-  echo "Not running as comfy, will try to switch to comfy (Docker USER)"
+  echo "-- Not running as comfy, will try to switch to comfy (Docker USER)"
   # Make the comfy user (the Docker USER) have the proper UID/GID as well
   sudo usermod -u ${WANTED_UID} -o -g ${WANTED_GID} comfy
   # restart the script as comfy (Docker USER) with the correct UID/GID this time
@@ -137,5 +137,7 @@ echo -n "git bin: "; which git
 
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
 cd ${COMFY_DIR}
+export COMFYUI_PATH=${COMFY_DIR}
+echo "-- COMFYUI_PATH: ${COMFYUI_PATH}"
 echo "-- ComfyUI version: \"${COMFY_VERSION}\""
 python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data
