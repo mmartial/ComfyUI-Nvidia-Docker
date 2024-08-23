@@ -12,6 +12,9 @@ With the recent addition of a [Flux example](https://comfyanonymous.github.io/Co
   - [4.2. FLUX.1\[dev\] example](#42-flux1dev-example)
 - [5. Building the container](#5-building-the-container)
   - [5.1. Nvidia base container](#51-nvidia-base-container)
+- [6. FAQ](#6-faq)
+  - [6.1. Virtualenv](#61-virtualenv)
+  - [6.2. ComfyUI Manager](#62-comfyui-manager)
 
 <h2>Preamble</h2>
 
@@ -45,7 +48,7 @@ Among the folders that will be created within `run` are `HF, data/{input,output,
 To run the container on an NVIDIA GPU, mounting the specified directory, exposing the port 8188 (change this by altering the `-p local:container` port mapping) and passing the calling user's UID and GID to the container:
 
 ```bash
-docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 mmartial/comfyui-nvidia-docker:latest
+docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 --name comfyui-nvidia mmartial/comfyui-nvidia-docker:latest
 ```
 
 ### 1.1. First time use
@@ -118,3 +121,29 @@ This container image and its contents are governed by the NVIDIA Deep Learning C
 By pulling and using the container, you accept the terms and conditions of this license:
 https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
 ```
+
+## 6. FAQ
+
+### 6.1. Virtualenv
+
+The container pip installs all required packages to the container, then creates a virtualenv (in `/comfy/mnt/venv` with `comfy/mnt` being mounted with the `docker run [...] -v`). 
+This allows for installations of python packages using `pip3 install` after running `docker exec -t comfy-nvidia /bin/bash` and from the provided `bash` prompt activating the `venv` with `source /comfy/mnt/venv/bin/activate`.
+From the `bash` prompt you can run `pip3 freeze` or other `pip3` commands such as `pip3 install civitai`
+
+### 6.2. ComfyUI Manager
+
+[ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager/) can be installed to be available in the container.
+The `/comfy/mnt` directory is mounted using the `docker run [...] -v`.
+As such, going to the "run directory" and going into the `custom_nodes` folder:
+```bash
+git clone https://github.com/ltdrdata/ComfyUI-Manager.git
+```
+You will need to restart ComfyUI for it to be recognized.
+
+The container to be accessible runs on `0.0.0.0` internally (ie all network interfaces).
+Docker takes care of exposing the port and control the access.
+Unfortunately when using ComfyUI Manager, this means that the security scan settings has to be lowered to be able to be able to `Install PIP packages` for example.
+To do so, in your run directory, edit `custom_nodes/ComfyUI-Manager/config.ini` and use the following `security_level = weak` (then reload ComfyUI)
+
+To use `cm-cli`, from the virtualenv, use: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py`.
+For example: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py show installed` (`COMFYUI_PATH=/ComfyUI` should be set)
