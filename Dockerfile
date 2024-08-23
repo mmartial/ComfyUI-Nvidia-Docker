@@ -60,7 +60,7 @@ RUN it="${COMFYUSER_DIR}/comfymnt_dir"; echo ${COMFYMNT_DIR} > $it && chmod 555 
 RUN it="${COMFYUSER_DIR}/comfy_dir"; echo ${COMFYUI_DIR} > $it && chmod 555 $it
 RUN it="${COMFYUSER_DIR}/comfy_userdir"; echo ${COMFYUI_USERDIR} > $it && chmod 555 $it
 RUN it="${COMFYUSER_DIR}/comfy_version"; echo ${COMFYUI_VERSION} > $it && chmod 555 $it
-RUN echo -n "BUILD_DATE: UTC " | tee ${COMFYUSER_DIR}/comfy_main.txt; date +'%Y%m%d_%H%M%S' | tee -a ${COMFYUSER_DIR}/comfy_main.txt
+RUN it="${COMFYUSER_DIR}/comfy_main.txt"; echo -n "BUILD_DATE: UTC " | tee $it; date +'%Y%m%d_%H%M%S' | tee -a $it
 
 RUN sudo chown -R comfy:comfy ${COMFYUI_USERDIR}
 RUN cd ${COMFYUI_USERDIR} && mkdir -p HF
@@ -71,5 +71,7 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 EXPOSE 8188
 
 COPY --chown=comfy:comfy --chmod=555 init.bash comfyui-nvidia-docker_init.bash
+
+LABEL comfyui-nvidia-docker=${COMFYUI_VERSION}
 
 CMD [ "./comfyui-nvidia-docker_init.bash" ]
