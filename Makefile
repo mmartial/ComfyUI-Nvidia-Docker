@@ -226,6 +226,9 @@ docker_tag:
 	@make local
 	@${DOCKER_CMD} tag ${NAMED_BUILD} ${DOCKERHUB_REPO}/${NAMED_BUILD}
 	@${DOCKER_CMD} tag ${NAMED_BUILD_LATEST} ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
+	@echo "Docker images tagged:"
+	@${DOCKER_CMD} images --filter "label=comfyui-nvidia-docker=${COMFYUI_VERSION}"
+
 
 docker_push:
 	@make docker_tag
