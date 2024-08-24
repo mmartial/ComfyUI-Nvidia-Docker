@@ -118,16 +118,17 @@ if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$new_uid" ]; then echo "Wrong UID (
 # rsync the prepared directory, doing its best to not overwrite existing files (using "update" keep the most recent) or remove files that are already in the destination
 rsync -avRuh  ${COMFY_USERDIR}/./* ${COMFYMNT_DIR}/. || error_exit "rsync failed"
 
-# virtualenv for custom installs
+# virtualenv for installation
 cd ${COMFYMNT_DIR}
 if [ ! -d "venv" ]; then
-  python3 -m venv --system-site-packages venv 
+  python3 -m venv venv || error_exit "Virtualenv creation failed"
 fi
 
 # Activate the virtualenv and upgrade pip
 if [ ! -f ${COMFYMNT_DIR}/venv/bin/activate ]; then error_exit "Virtualenv not created, please erase any venv directory"; fi
 source ${COMFYMNT_DIR}/venv/bin/activate
 pip3 install --upgrade pip
+
 echo -n "PATH: "; echo $PATH
 echo -n "Python version: "; python3 --version
 echo -n "Pip version: "; pip3 --version
@@ -137,7 +138,20 @@ echo -n "git bin: "; which git
 
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
 cd ${COMFY_DIR}
+pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U "huggingface_hub[cli]"
+
 export COMFYUI_PATH=${COMFY_DIR}
 echo "-- COMFYUI_PATH: ${COMFYUI_PATH}"
 echo "-- ComfyUI version: \"${COMFY_VERSION}\""
+
+# Check for a user custom script
+it=${COMFYMNT_DIR}/user_script.bash
+echo "-- Checking for user script: ${it}"
+if [ -f $it ]; then
+  echo "  ++ Running user script: ${it}"
+  chmod +x $it
+  $it
+fi
+
 python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data
