@@ -15,23 +15,15 @@ script_fullname=$0
 cmd_wuid=$1
 cmd_wgid=$2
 
-if [ -z "$WANTED_UID" ]; then
-  WANTED_UID=$cmd_wuid
-fi
-if [ -z "$WANTED_GID" ]; then
-  WANTED_GID=$cmd_wgid
-fi
-if [ -z "$WANTED_UID" ]; then
-  error_exit "Missing WANTED_UID"
-fi
-if [ -z "$WANTED_GID" ]; then
-  error_exit "Missing WANTED_GID"
-fi
+if [ -z "$WANTED_UID" ]; then WANTED_UID=$cmd_wuid; fi
+if [ -z "$WANTED_UID" ]; then echo "-- No WANTED_UID provided, using comfy user default of 1024"; WANTED_UID=1024; fi
+if [ -z "$WANTED_GID" ]; then WANTED_GID=$cmd_wgid; fi
+if [ -z "$WANTED_GID" ]; then echo "-- No WANTED_GID provided, using comfy user default of 1024"; WANTED_GID=1024; fi
 
 # The script is started as comfy
 # if the UID/GID are not correct, we create a new comfytoo user with the correct UID/GID which will restart the script
 # after the script restart we restart again as comfy
-if [ "A${whoami}" == "Acomfytoo" ]; then 
+if [ "A${whoami}" == "Acomfytoo" ]; then
   echo "-- Not running as comfy, will try to switch to comfy (Docker USER)"
   # Make the comfy user (the Docker USER) have the proper UID/GID as well
   sudo usermod -u ${WANTED_UID} -o -g ${WANTED_GID} comfy
@@ -39,7 +31,7 @@ if [ "A${whoami}" == "Acomfytoo" ]; then
   sudo su comfy $script_fullname $WANTED_UID $WANTED_GID && exit
 fi
 
-it=/etc/comfy_base.txt
+it=/etc/image_base.txt
 if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
 echo "-- Base image details (from $it):"; cat $it
 
@@ -49,46 +41,17 @@ COMFYUSER_DIR=`cat $it`
 echo "-- COMFYUIUSER_DIR: \"${COMFYUSER_DIR}\""
 if test -z ${COMFYUSER_DIR}; then error_exit "Empty COMFYUSER_DIR variable"; fi
 
-it=${COMFYUSER_DIR}/comfy_main.txt
-if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
-echo "-- Main image details (from $it):"; cat $it
-
-it=${COMFYUSER_DIR}/comfy_dir
-if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
-COMFY_DIR=`cat $it`
-echo "-- COMFY_DIR: \"${COMFY_DIR}\""
-if test -z ${COMFY_DIR}; then error_exit "Empty COMFY_DIR variable"; fi
-
-it=${COMFYUSER_DIR}/comfymnt_dir
-if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
-COMFYMNT_DIR=`cat $it`
-echo "-- COMFYMNT_DIR: \"${COMFYMNT_DIR}\""
-if test -z ${COMFYMNT_DIR}; then error_exit "Empty COMFYMNT_DIR variable"; fi
-
-it=${COMFYUSER_DIR}/comfy_userdir
-if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
-COMFY_USERDIR=`cat $it`
-if test -z ${COMFY_USERDIR}; then error_exit "Empty COMFY_USERDIR variable"; fi
-echo "-- Content directory: \"${COMFY_USERDIR}\""
-#find ${COMFY_USERDIR} -type f -exec ls -l {} \;
-
-it=${COMFYUSER_DIR}/comfy_version
-if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
-COMFY_VERSION=`cat $it`
-if test -z ${COMFY_VERSION}; then error_exit "Empty COMFY_VERSION variable"; fi
-echo "-- ComfyUI version: \"${COMFY_VERSION}\""
-
 # we are running with some given UID/GID, do we need to modify UID/GID
-comfy_uid=`id -u`
-comfy_gid=`id -g`
+current_uid=`id -u`
+current_gid=`id -g`
 
 do_change="False"
 
-if [ ! -z "$WANTED_GID" -a "$WANTED_GID" != "$comfy_gid" ]; then
+if [ ! -z "$WANTED_GID" -a "$WANTED_GID" != "$current_gid" ]; then
   echo "-- Will attempt to create a new user with GID ${WANTED_GID}"
   do_change="True"
 fi
-if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$comfy_uid" ]; then
+if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$current_uid" ]; then
   echo "-- Will attempt to create a new user with UID ${WANTED_UID}"
   do_change="True"
 fi
@@ -99,10 +62,6 @@ if [ $do_change == "True" ]; then
   (getent group ${WANTED_GID} || (sudo addgroup --group --gid ${WANTED_GID} comfytoo || true))
   sudo useradd -u ${WANTED_UID} -o -g ${WANTED_GID} -s /bin/bash -d ${COMFYUSER_DIR} -M comfytoo
   sudo adduser comfytoo sudo
-  # change the source directory owned by the expected UID/GID
-  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFYMNT_DIR}
-  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_USERDIR}
-  sudo chown -R ${WANTED_UID}:${WANTED_GID} ${COMFY_DIR}
   # Reload the script to bypass limitation (and exit)
   sudo su comfytoo $script_fullname ${WANTED_UID} ${WANTED_GID} && exit
 fi
@@ -113,45 +72,85 @@ echo "== user -- uid: $new_uid / gid: $new_gid"
 if [ ! -z "$WANTED_GID" -a "$WANTED_GID" != "$new_gid" ]; then echo "Wrong GID ($new_gid), exiting"; exit 0; fi
 if [ ! -z "$WANTED_UID" -a "$WANTED_UID" != "$new_uid" ]; then echo "Wrong UID ($new_uid), exiting"; exit 0; fi
 
+# We are now running as comfy
+echo "== Running as comfy"
 
-# ${COMFYMNT_DIR} is mounted to the `docker run [...] -v` and is the only directory we should write to 
-# rsync the prepared directory, doing its best to not overwrite existing files (using "update" keep the most recent) or remove files that are already in the destination
-rsync -avRuh  ${COMFY_USERDIR}/./* ${COMFYMNT_DIR}/. || error_exit "rsync failed"
+# Obtain the latest version of ComfyUI if not already present
+cd ${COMFYUSER_DIR}/mnt
+if [ ! -d "ComfyUI" ]; then
+  echo "== Cloning ComfyUI"
+  git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI || error_exit "ComfyUI clone failed"
+fi
+
+if [ ! -d HF ]; then
+  echo "== Creating HF directory"
+  mkdir -p HF
+fi
+export HF_HOME=${COMFYUSER_DIR}/mnt/HF
 
 # virtualenv for installation
-cd ${COMFYMNT_DIR}
 if [ ! -d "venv" ]; then
+  echo "== Creating virtualenv"
   python3 -m venv venv || error_exit "Virtualenv creation failed"
 fi
 
 # Activate the virtualenv and upgrade pip
-if [ ! -f ${COMFYMNT_DIR}/venv/bin/activate ]; then error_exit "Virtualenv not created, please erase any venv directory"; fi
-source ${COMFYMNT_DIR}/venv/bin/activate
-pip3 install --upgrade pip
+if [ ! -f ${COMFYUSER_DIR}/mnt/venv/bin/activate ]; then error_exit "virtualenv not created, please erase any venv directory"; fi
+echo "== Activating virtualenv"
+source ${COMFYUSER_DIR}/mnt/venv/bin/activate || error_exit "Virtualenv activation failed"
+echo "== Upgrading pip"
+pip3 install --upgrade pip || error_exit "Pip upgrade failed"
 
-echo -n "PATH: "; echo $PATH
-echo -n "Python version: "; python3 --version
-echo -n "Pip version: "; pip3 --version
-echo -n "python bin: "; which python3
-echo -n "pip bin: "; which pip3
-echo -n "git bin: "; which git
+# extent the PATH to include the user local bin directory
+export PATH=${COMFYUSER_DIR}/.local/bin:${PATH}
 
-# Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
-cd ${COMFY_DIR}
-pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
-pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U "huggingface_hub[cli]"
+# Verify the variables
+echo "== Environment details:"
+echo -n "  PATH: "; echo $PATH
+echo -n "  Python version: "; python3 --version
+echo -n "  Pip version: "; pip3 --version
+echo -n "  python bin: "; which python3
+echo -n "  pip bin: "; which pip3
+echo -n "  git bin: "; which git
 
-export COMFYUI_PATH=${COMFY_DIR}
+# Install ComfyUI's requirements
+cd ComfyUI
+echo "== Installing/Updating from ComfyUI's requirements"
+pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt || error_exit "ComfyUI requirements install/upgrade failed"
+echo "== Installing Huggingface Hub"
+pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U "huggingface_hub[cli]" || error_exit "HuggingFace Hub CLI install/upgrade failed"
+
+export COMFYUI_PATH=`pwd`
 echo "-- COMFYUI_PATH: ${COMFYUI_PATH}"
-echo "-- ComfyUI version: \"${COMFY_VERSION}\""
 
-# Check for a user custom script
-it=${COMFYMNT_DIR}/user_script.bash
-echo "-- Checking for user script: ${it}"
-if [ -f $it ]; then
-  echo "  ++ Running user script: ${it}"
-  chmod +x $it
-  $it
+# Install ComfyUI Manager if not already present
+cd custom_nodes
+if [ ! -d ComfyUI-Manager ]; then
+  echo "== Cloning ComfyUI-Manager"
+  git clone https://github.com/ltdrdata/ComfyUI-Manager.git || error_exit "ComfyUI-Manager clone failed"
+fi
+if [ ! -d ComfyUI-Manager ]; then error_exit "ComfyUI-Manager not found"; fi
+cd ComfyUI-Manager
+if [ ! -f config.ini ]; then
+  echo "== You will need to run ComfyUI-Manager a first time for the configuration file to be generated, we can not attempt to update its security level yet"
+else
+  echo "== Attempting to update ComfyUI-Manager security level (running in a container, we need to expose the WebUI to 0.0.0.0)"
+  perl -p -i -e "s%security_level = normal%security_level = weak%g" config.ini
+  perl -p -i -e "s%security_level = strict%security_level = weak%g" config.ini
 fi
 
-python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data
+cd ${COMFYUI_PATH}
+echo -n "== Container directory: "; pwd
+
+# Check for a user custom script
+it=${COMFYUSER_DIR}/mnt/user_script.bash
+echo "== Checking for user script: ${it}"
+if [ -f $it ]; then
+  echo "  Running user script: ${it}"
+  chmod +x $it
+  $it || error_exit "User script failed or exited with an error (possibly on purpose to avoid running the default ComfyUI command)"
+fi
+
+echo "== Running ComfyUI"
+# Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
+python3 ./main.py --listen 0.0.0.0 --disable-auto-launch

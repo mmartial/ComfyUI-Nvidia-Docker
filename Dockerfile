@@ -1,80 +1,80 @@
-ARG DOCKER_FROM=comfyui-base:latest
+ARG DOCKER_FROM=nvidia/cuda:12.3.2-runtime-ubuntu22.04
 FROM ${DOCKER_FROM}
 
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update -y --fix-missing \
-  && apt-get upgrade -y \
-  && apt-get install -y rsync python3-venv git sudo \
-  && apt-get clean
+# Adapted from https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.2.2/ubuntu2204/devel/cudnn8/Dockerfile
+ENV NV_CUDNN_VERSION=8.9.7.29
+ENV NV_CUDNN_PACKAGE_NAME="libcudnn8"
+ENV NV_CUDA_ADD=cuda12.2
+ENV NV_CUDNN_PACKAGE="$NV_CUDNN_PACKAGE_NAME=$NV_CUDNN_VERSION-1+$NV_CUDA_ADD"
+ENV NV_CUDNN_PACKAGE_DEV="$NV_CUDNN_PACKAGE_NAME-dev=$NV_CUDNN_VERSION-1+$NV_CUDA_ADD"
+LABEL com.nvidia.cudnn.version="${NV_CUDNN_VERSION}"
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ${NV_CUDNN_PACKAGE} \
+    ${NV_CUDNN_PACKAGE_DEV} \
+    && apt-mark hold ${NV_CUDNN_PACKAGE_NAME} \
+    && rm -rf /var/lib/apt/lists/*
+
+##### Base
+
+# Install system packages
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y --fix-missing\
+  && apt-get install -y \
+    apt-utils \
+    locales \
+    ca-certificates \
+    && apt-get upgrade -y \
+    && apt-get clean
+
+# UTF-8
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 ENV LANG=en_US.utf8
 ENV LC_ALL=C
 
+# Install needed packages
+RUN apt-get update -y --fix-missing \
+  && apt-get upgrade -y \
+  && apt-get install -y \
+    build-essential \
+    python3-dev \
+    unzip \
+    wget \
+    zip \
+    zlib1g \
+    zlib1g-dev \
+    gnupg \
+    rsync \
+    python3-pip \
+    python3-venv \
+    git \
+    sudo \
+  && apt-get clean
+
+ENV BUILD_FILE="/etc/image_base.txt"
+ARG BASE_DOCKER_FROM
+RUN echo "DOCKER_FROM: ${BASE_DOCKER_FROM}" | tee ${BUILD_FILE}
+RUN echo "CUDNN: ${NV_CUDNN_PACKAGE_NAME} (${NV_CUDNN_VERSION})" | tee -a ${BUILD_FILE}
+
+##### ComfyUI preparation
 # The comfy user will have UID 1024 and GID 1024
-# We will install all the necessary packages for ComfyUI at init.bash time
-ARG COMFYUI_VERSION="fail"
-ENV COMFYUI_DIR="/ComfyUI"
-RUN mkdir -p ${COMFYUI_DIR} && chown 1024:1024 ${COMFYUI_DIR}
-WORKDIR ${COMFYUI_DIR}
-
-ENV PIP_ROOT_USER_ACTION=ignore
-
-RUN wget -q -O /tmp/get-pip.py --no-check-certificate https://bootstrap.pypa.io/get-pip.py \
-  && python3 /tmp/get-pip.py \
-  && pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U pip \
-  && rm /tmp/get-pip.py
-
-# Create a local comfy user and prepare a directory with ComfyUI's own directories ready to copy to the end user
-ENV COMFYUI_USERDIR="/ComfyUI-user"
-RUN mkdir -p ${COMFYUI_USERDIR}/data/temp ${COMFYUI_USERDIR}/HF ${COMFYUI_USERDIR}/user \
-    && chown -R 1024:1024 ${COMFYUI_USERDIR}
-
 ENV COMFYUSER_DIR="/comfy"
-ENV COMFYMNT_DIR="${COMFYUSER_DIR}/mnt"
-
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && useradd -u 1024 -U -d ${COMFYUSER_DIR} -s /bin/bash -m comfy \
     && usermod -G users comfy \
     && adduser comfy sudo \
     && test -d ${COMFYUSER_DIR}
-
 RUN it="/etc/comfyuser_dir"; echo ${COMFYUSER_DIR} > $it && chmod 555 $it
-
-USER comfy
-# Get the full repo but checkout the version we want
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git ${COMFYUI_DIR} \
-    && cd ${COMFYUI_DIR} \
-    && git checkout v${COMFYUI_VERSION}
-
-RUN cd ${COMFYUI_DIR} \
-  && ln -s ${COMFYMNT_DIR}/user \
-  && mv models ${COMFYUI_USERDIR}/. && ln -s ${COMFYMNT_DIR}/models \
-  && mv custom_nodes ${COMFYUI_USERDIR}/. && ln -s ${COMFYMNT_DIR}/custom_nodes \
-  && mv input ${COMFYUI_USERDIR}/data/. && ln -s ${COMFYMNT_DIR}/data/input \
-  && mv output ${COMFYUI_USERDIR}/data/. && ln -s ${COMFYMNT_DIR}/data/output \
-  && mv comfy_extras ${COMFYUI_USERDIR}/. && ln -s ${COMFYMNT_DIR}/comfy_extras
-
-RUN it="${COMFYUSER_DIR}/comfymnt_dir"; echo ${COMFYMNT_DIR} > $it && chmod 555 $it
-RUN it="${COMFYUSER_DIR}/comfy_dir"; echo ${COMFYUI_DIR} > $it && chmod 555 $it
-RUN it="${COMFYUSER_DIR}/comfy_userdir"; echo ${COMFYUI_USERDIR} > $it && chmod 555 $it
-RUN it="${COMFYUSER_DIR}/comfy_version"; echo ${COMFYUI_VERSION} > $it && chmod 555 $it
-RUN it="${COMFYUSER_DIR}/comfy_main.txt"; echo -n "BUILD_DATE: UTC " | tee $it; date +'%Y%m%d_%H%M%S' | tee -a $it
-
-RUN sudo chown -R comfy:comfy ${COMFYUI_USERDIR}
-RUN cd ${COMFYUI_USERDIR} && mkdir -p HF
-ENV HF_HOME=${COMFYUI_USERDIR}/HF
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 
 EXPOSE 8188
 
-COPY --chown=comfy:comfy --chmod=555 init.bash comfyui-nvidia-docker_init.bash
+USER comfy
+WORKDIR ${COMFYUSER_DIR}
+COPY --chown=comfy:comfy --chmod=555 init.bash comfyui-nvidia_init.bash
 
-ENV COMFYUI_PATH=${COMFYUI_DIR}
+ARG BUILD_DATE="unknown"
+LABEL comfyui-nvidia-docker-build=${BUILD_DATE}
 
-ARG COMFYUI_BUILD_METHOD="unknown"
-LABEL comfyui-nvidia-docker-version=${COMFYUI_VERSION}
-LABEL comfyui-nvidia-docker-build=${COMFYUI_BUILD_METHOD}
-
-CMD [ "./comfyui-nvidia-docker_init.bash" ]
+CMD [ "./comfyui-nvidia_init.bash" ]

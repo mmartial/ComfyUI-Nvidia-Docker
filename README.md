@@ -1,14 +1,18 @@
 <h1>ComfyUI (NVIDIA) Docker</h1>
 
-[ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) is an impressive diffusion WebUI. 
+[ComfyUI](https://github.com/comfyanonymous/ComfyUI/tree/master) is a Stable Diffusion WebUI. 
 With the recent addition of a [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/), I created this container builder to test it.
 
-The container size (over 5GB) is mostly because of the Nvidia components. It is a Ubuntu 22.04 image with Nvidia CUDA and CuDNN.
+The container size (over 5GB) contains the required components on an Ubuntu 22.04 image with Nvidia CUDA and CuDNN (the base container is available from Nvidia's DockerHub); we add the requirements components to support an installation of ComfyUI.
 
-During its first run, it will download all the python packages needed by ComfyUI and place them in the `run/venv` (run directory's virtual environment)'s folder. This adds an expected 5GB of content to the installation. This also takes as much time to complete as is needed depending on your internet connection.  You will know the ComfyUI is running when you check the `docker logs` and see `To see the GUI go to: http://0.0.0.0:8188`
+During its first run, it will download ComfyUI from git (into the `run/ComfyUI` folder), then create a Python virtual environments (in `run/venv`) for all the python packages needed by the tool. It will then install [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager) into ComfyUI's `custom_nodes` directory. 
+This adds an expected 5GB of content to the installation. This also takes as much time to complete as is needed depending on your internet connection.  
+You will know the ComfyUI WebUI is running when you check the `docker logs` and see `To see the GUI go to: http://0.0.0.0:8188`
 
 **About 10GB of space is needed between the container and the virtual environment additional installation.**
 This does not take into account the models and other additional packages installation that the end user might perform.
+
+**It is recommended to re-run the container after first installation to enable the change to the ComfyUI Manager `security_leval` (we run it within a container, as such we need to expose the WebUI to 0.0.0.0)**
 
 - [1. Preamble](#1-preamble)
 - [2. Running the container](#2-running-the-container)
@@ -31,40 +35,41 @@ This does not take into account the models and other additional packages install
 
 ## 1. Preamble
 
-The `Makefile` will attempt to find the latest published release on GitHub and automatically propose to prepare this version to be installed during the container start. It will create a Python virtual environment, activate it and install all requirements from the requested version.
-
-If desired, it is also possible to manually set the version, by modifying the `Makefile` and adapting the `COMFY_VERSION` variable and enabling the `COMFYUI_VERSION_OVERRIDE` flag.
-
-This build is also set to not run as the `root` user, but run the requested UID/GID at `docker run` time (if none are provided, the container will use 1024/1024).
-This is done to a allow end users to have local directory structures for all the side data (input, output, temp, user), Hugging Face `HF_HOME` if used, and the entire `models` being separate from the running container and able to be altered by the user.
-
-The tag for the ComfyUI container image is obtained from the latest official release from GitHub.
-
-Note that a `docker buildx prune -f` might be needed to force a clean build after removing already existing containers.
-
+This build is made to NOT run as the `root` user, but run within the container as a `comfy` user using the UID/GID requested at `docker run` time (if none are provided, the container will use 1024/1024).
+This is done to a allow end users to have local directory structures for all the side data (input, output, temp, user), Hugging Face `HF_HOME` if used, and the entire `models` being separate from the container and able to be altered by the user.
 To request a different UID/GID at run time use the `WANTED_UID` and `WANTED_GID` environment variables when calling the container.
 
 Note: 
 - for details on how to set up a Docker to support an NVIDIA GPU on an Ubuntu 24.04 system, please see [Setting up NVIDIA docker & podman (Ubuntu 24.04)](https://blg.gkr.one/20240404-u24_nvidia_docker_podman/)
-- If you are new to ComfyUI, a recommended read: [ComfyUI_examples](https://comfyanonymous.github.io/ComfyUI_examples/)
-- [ComfyUI FLUX examples](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
-- [FLUX.1[dev] with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
-- [FLUX.1 LoRA training](https://blg.gkr.one/20240818-flux_lora_training/)
+- If you are new to ComfyUI, see [OpenArt's ComfyUI Academy](https://openart.ai/workflows/academy)
+- Some ComfyUI examples:
+  - [ComfyUI_examples](https://comfyanonymous.github.io/ComfyUI_examples/)
+  - [ComfyUI FLUX examples](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
+- Some additional reads:
+  - [FLUX.1[dev] with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
+  - [FLUX.1 LoRA training](https://blg.gkr.one/20240818-flux_lora_training/)
 
 ## 2. Running the container
 
 In the directory where we intend to run the container, create the `run` folder as the user that we want to share the UID/GID with **before running the container (the container is started as root, as such the folder if it does not exist will be created as root)** (or give it another name, just be adapt the `-v` mapping in the `docker run` below). 
 
 That `run` folder will be populated with a few sub-directories created with the UID/GID passed on the command line (see the command line below). 
-Among the folders that will be created within `run` are `HF, data/{input,output,temp}, user, models, custom_nodes, comfy_extras`
-The `venv` is also added to this `run` folder; this virtual environment is where all the required pyton packages for ComfyUI will be placed. A default installation requires about 5GB of additional install in addition to the container itself.
+Among the folders that will be created within `run` are `HF, ComfyUI, venv`
+- `HF` is the expected location of the `HF_HOME` (HuggingFace installation directory)
+- `ComfyUI` is the git clone version of tool, with all its sub-directories, among which:
+  - `custom_nodes` for additional support nodes, for example ComfyUI-Manager,
+  - `models` and all its sub-directories is where `checkpoints`, `clip`, `loras`, `unet`, etc have to be placed.
+  - `input` and `output` are where input images are to be placed and generated images will end up. 
+- `venv` is the virtual environment and where all the required pyton packages for ComfyUI and other additions will be placed. A default ComfyUI package installation requires about 5GB of additional install in addition to the container itself; those packages will be in this `venv` folder.
 
-**The initialization script (run at each restart of the container) will do its best to not overwrite existing files (keeping the most recent -- if you are modifying an existing file, it might be safer to rename it; if a new version appears on Comfy's GitHub, your version might get erased) or remove files that are already in the destination.**
-
-The image starts the `init.bash` script that performs a few operations:
-- Ensure we are able to use the `WANTED_UID` and `WANTED_GID` as the `comfy` user (the user set to run the container)
-- Copy all the ComfyUI specific content that will be placed inside the "run" directory. This is to ensure the models and other content is available outside of a container that is expected to be update, while giving the end user access to those directories to place content to use.
-- Create and activate a python virtual environment that exists in the "run" directory. This also separate package management from the container, and allow the end user to install additional ComfyUI package (such as ComfyUI Manager and others)
+When starting the container image starts the `init.bash` script that performs a few operations:
+- Ensure we are able to use the `WANTED_UID` and `WANTED_GID` as the `comfy` user (the user set to run the container),
+- Obtain the latest version of ComfyUI from GitHub if not already present in the mounted `run` folder.
+- Create the virtual environment (`venv`) if not already existing
+- Activate this virtual environment
+- Install all the ComfyUI required python package. If those are already present, it should not need to download additional content.
+- Installing ComfyUI-Manager if it is not present.
+  - During additional runs, we will change the `security_level` to allow for the tool to be fully functional
 - Check for a user custom script in the "run" directory. It must be named `user_script.bash`. If one exists, run it.
 - Run the ComfyUI WebUI. For the exact command run, please see the last line of `init.bash`
 
@@ -83,7 +88,7 @@ In the directory where you want to run the compose stack, create the `compose.ya
 
 ```yaml
 services:
-  comfyui-nvidia-docker:
+  comfyui-nvidia:
     image: mmartial/comfyui-nvidia-docker:latest
     container_name: comfyui-nvidia
     ports:
@@ -118,6 +123,9 @@ Please see [docker compose up](https://docs.docker.com/reference/cli/docker/comp
 
 The first time you run the container, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example.
 
+Before attempting to run this example, it is recommended to restart the container.
+This is to enable modfications to the ComfyUI Manager's default `security_level` and be able to use it to install packages and nodes.
+
 This example requires the `v1-5-pruned-emaonly.ckpt` file.
 
 It is available for example at https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
@@ -125,7 +133,7 @@ It is available for example at https://huggingface.co/runwayml/stable-diffusion-
 The way to get the WebUI to see if is to first put it in the `models/checkpoints` folder:
 
 ```bash
-cd <YOUR_RUN_DIRECTORY>/models/checkpoints
+cd <YOUR_RUN_DIRECTORY>/ComfyUI/models/checkpoints
 wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt
 ```
 
@@ -133,35 +141,28 @@ After the download is complete, click "Refresh" on the WebUI and "Queue Prompt"
 
 Depending on the workflow, and the needed files by the different nodes, some can be found on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
 
-For example, for checkpoints, those would go in the `run/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". 
+For example, for checkpoints, those would go in the `run/ComfyUI/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". 
 Clicking on the model's filename in the "Checkpoint Loader" will show the list of available files in that folder.
 
 ## 3. Docker image
 
 ### 3.1. Building the image
 
-The `comfyui-nvidia-base` (`base`) image contains the prerequisites to enable a ComfyUI installation from its latest release from GitHub.
-The tag for the base image is based on Today's date.
+Note that a `docker buildx prune -f` might be needed to force a clean build after removing already existing containers.
 
-
-The `comfyui-nvidia-docker` (`local`) image contains the installation of the core components of ComfyUI from its latest release from GitHub. 
+The `comfyui-nvidia-docker` (`latest`) image contains the installation of the core components of ComfyUI from its latest release from GitHub. 
 The tag for the final image is based on the version of ComfyUI.
 
-Running `make` will show us the different build options; `local` is the one most people will want.
+Running `make` will show us the different build options; `latest` is the one we want.
 
 Run:
 ```bash
-make local
+make latest
 ```
-
-The "base" image uses `Dockerfile-base` while the final image `Dockerfile`.
-Feel free to modify either as needed.
 
 ### 3.2. Availability on DockerHub
 
-Builds are available on DockerHub:
-- [mmartial/comfyui-nvidia-docker](https://hub.docker.com/r/mmartial/comfyui-nvidia-docker), the ComfyUI pre-built image generated from the file in this repository's `Dockerfile`.
-- [mmartial/comfyui-nvidia-base](https://hub.docker.com/r/mmartial/comfyui-nvidia-base), the base container that is used by the ComfyUI image. This image is published as it can be useful being a Ubuntu 22.04 with Nvidia components installed. For details on what is incorporated, please see the `Dockerfile-base` file.
+Builds are available on DockerHub at [mmartial/comfyui-nvidia-docker](https://hub.docker.com/r/mmartial/comfyui-nvidia-docker), built from this repository's `Dockerfile`.
 
 ### 3.3. Unraid availability
 
@@ -197,16 +198,20 @@ Template at [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flu
 ### 5.1. Virtualenv
 
 The container pip installs all required packages to the container, then creates a virtualenv (in `/comfy/mnt/venv` with `comfy/mnt` being mounted with the `docker run [...] -v`). 
-This allows for installations of python packages using `pip3 install` after running `docker exec -t comfy-nvidia /bin/bash` and from the provided `bash` prompt activating the `venv` with `source /comfy/mnt/venv/bin/activate`.
-From the `bash` prompt you can run `pip3 freeze` or other `pip3` commands such as `pip3 install civitai`
+
+This allows for installations of python packages using `pip3 install`. 
+After running `docker exec -t comfy-nvidia /bin/bash` and from the provided `bash`, activate the `venv` with `source /comfy/mnt/venv/bin/activate`.
+From the `bash` prompt you can now run `pip3 freeze` or other `pip3` commands such as `pip3 install civitai`
 
 ### 5.2. user_script.bash
 
-The user script can perform many operations. Because this is a Docker container, updating the container will wipe any additional installations that are not in the "run" directory, so it is possible to force some reinstall without modifying the `Makefile`.
-It is also possible bypass the ComfyUI command started (for people interested in trying the `--fast` for example).
+The `run/user_script.bash` user script can perform additional operations. 
+Because this is a Docker container, updating the container will remove any additional installations that are not in the "run" directory, so it is possible to force some reinstall at runtime.
+It is also possible to bypass the ComfyUI command started (for people interested in trying the `--fast` for example).
 
-The container image is a Ubuntu 22.04 with CUDA and CuDNN.
-The `comfy` user is `sudo` capable.
+To perform those changes, be aware that:
+- The container image is Ubuntu based.
+- The `comfy` user is `sudo` capable.
 
 A simple example of one could be:
 
@@ -214,16 +219,24 @@ A simple example of one could be:
 #!/bin/bash
 
 echo "== Adding system package"
-sudo apt update
-sudo apt install -y nvtop
+DEBIAN_FRONTEND=noninteractive sudo apt update
+DEBIAN_FRONTEND=noninteractive sudo apt install -y nvtop
 
-echo "== Adding python  package"
+echo "== Adding python package"
 source /comfy/mnt/venv/bin/activate
-pip3 install nvitop
+pip3 install pipx
+echo "== Adding nvitop"
+# nvitop will be installed in the user's .local/bin directory which will be removed when the container is updated
+pipx install nvitop
+# extend the path to include the installation directory
+export PATH=/comfy/.local/bin:${PATH}
+# when starting a new docker exec, will still need to be run as ~/.local/bin/nvitop
+# but will be in the PATH for commands run from within this script
 
 echo "== Override ComfyUI launch command"
-cd /ComfyUI
-python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data --fast
+# Make sure to have activated the venv before running this command 
+cd /comfy/mnt/ComfyUI
+python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --fast
 
 echo "== To prevent the regular Comfy command from starting, we 'exit 1'"
 echo "   If we had not overrode it, we could simply end with an ok exit: 'exit 0'" 
@@ -234,18 +247,15 @@ The script will be placed in the base of the "run" directory, and must be named 
 
 ### 5.3. ComfyUI Manager
 
-[ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager/) can be installed to be available in the container.
-The `/comfy/mnt` directory is mounted using the `docker run [...] -v`.
-As such, going to the "run directory" and going into the `custom_nodes` folder:
-```bash
-git clone https://github.com/ltdrdata/ComfyUI-Manager.git
-```
-You will need to restart ComfyUI for it to be recognized.
+[ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager/) is installed and available in the container.
 
 The container to be accessible runs on `0.0.0.0` internally (ie all network interfaces).
 Docker takes care of exposing the port and control the access.
-Unfortunately when using ComfyUI Manager, this means that the security scan settings has to be lowered to be able to be able to `Install PIP packages` for example.
-To do so, in your run directory, edit `custom_nodes/ComfyUI-Manager/config.ini` and use the following `security_level = weak` (then reload ComfyUI)
+When using ComfyUI Manager, this means that the security scan settings has to be lowered to be able to be able to `Install PIP packages` for example.
+
+To do this:
+- manually: by going in your "run" folder directory and edit `custom_nodes/ComfyUI-Manager/config.ini` and use the following `security_level = weak` (then reload ComfyUI)
+- automatically: stop and restart the container; the `config.ini` was not present at first run but will be there at consecutive restarts
 
 To use `cm-cli`, from the virtualenv, use: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py`.
 For example: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py show installed` (`COMFYUI_PATH=/ComfyUI` should be set)
