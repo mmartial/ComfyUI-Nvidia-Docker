@@ -33,6 +33,8 @@ NAMED_BUILD_LATEST=${COMFYUI_CONTAINER_NAME}:latest
 DOCKERFILE=Dockerfile
 DOCKER_FROM=${BASE_BUILD_LATEST}
 
+COMFYUI_BUILD_METHOD=full_venv
+
 DOCKER_PRE="NVIDIA_VISIBLE_DEVICES=all"
 
 CHECK_EXISTING_BUILD=True
@@ -226,8 +228,11 @@ docker_tag:
 	@make local
 	@${DOCKER_CMD} tag ${NAMED_BUILD} ${DOCKERHUB_REPO}/${NAMED_BUILD}
 	@${DOCKER_CMD} tag ${NAMED_BUILD_LATEST} ${DOCKERHUB_REPO}/${NAMED_BUILD_LATEST}
+	@make docker_tag_list
+
+docker_tag_list:
 	@echo "Docker images tagged:"
-	@${DOCKER_CMD} images --filter "label=comfyui-nvidia-docker=${COMFYUI_VERSION}"
+	@${DOCKER_CMD} images --filter "label=comfyui-nvidia-docker-version=${COMFYUI_VERSION}"
 
 
 docker_push:
