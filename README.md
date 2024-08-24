@@ -225,7 +225,7 @@ echo "== Override ComfyUI launch command"
 cd /ComfyUI
 python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --temp-directory /comfy/mnt/data --fast
 
-echo "== To preventing the regular Comfy command from starting, we 'exit 1'"
+echo "== To prevent the regular Comfy command from starting, we 'exit 1'"
 echo "   If we had not overrode it, we could simply end with an ok exit: 'exit 0'" 
 exit 1
 ```
