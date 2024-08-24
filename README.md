@@ -10,7 +10,7 @@ At first boot, it will download all the python packages needed by ComfyUI and pl
 **About 10GB of space is needed between the container and the virtual environment additional installation.**
 This does not take into account the models and other additional packages installation that the end user might perform.
 
-- [1. Preamble\<](#1-preamble)
+- [1. Preamble](#1-preamble)
 - [2. Running the container](#2-running-the-container)
   - [2.1. docker run](#21-docker-run)
   - [2.2. Docker compose](#22-docker-compose)
@@ -28,7 +28,7 @@ This does not take into account the models and other additional packages install
   - [5.2. user\_script.bash](#52-user_scriptbash)
   - [5.3. ComfyUI Manager](#53-comfyui-manager)
 
-## 1. Preamble<
+## 1. Preamble
 
 The `Makefile` will attempt to find the latest published release on GitHub and automatically propose to prepare this version to be installed during the container start. It will create a Python virtual environment, activate it and install all requirements from the requested version.
 
