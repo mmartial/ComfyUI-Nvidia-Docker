@@ -5,7 +5,7 @@ With the recent addition of a [Flux example](https://comfyanonymous.github.io/Co
 
 The container size (over 5GB) is mostly because of the Nvidia components. It is a Ubuntu 22.04 image with Nvidia CUDA and CuDNN.
 
-At first boot, it will download all the python packages needed by ComfyUI and place them in the `run/venv` (run directory's virtual environment)'s folder. This adds an expected 5GB of content to the installation.
+During its first run, it will download all the python packages needed by ComfyUI and place them in the `run/venv` (run directory's virtual environment)'s folder. This adds an expected 5GB of content to the installation. This also takes as much time to complete as is needed depending on your internet connection.  You will know the ComfyUI is running when you check the `docker logs` and see `To see the GUI go to: http://0.0.0.0:8188`
 
 **About 10GB of space is needed between the container and the virtual environment additional installation.**
 This does not take into account the models and other additional packages installation that the end user might perform.
@@ -27,6 +27,7 @@ This does not take into account the models and other additional packages install
   - [5.1. Virtualenv](#51-virtualenv)
   - [5.2. user\_script.bash](#52-user_scriptbash)
   - [5.3. ComfyUI Manager](#53-comfyui-manager)
+- [6. Troubleshooting](#6-troubleshooting)
 
 ## 1. Preamble
 
@@ -248,3 +249,9 @@ To do so, in your run directory, edit `custom_nodes/ComfyUI-Manager/config.ini` 
 
 To use `cm-cli`, from the virtualenv, use: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py`.
 For example: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py show installed` (`COMFYUI_PATH=/ComfyUI` should be set)
+
+## 6. Troubleshooting
+
+The `venv` in the "run" directory is where all the required python packages used by the tool are placed.
+In case of issue, it is recommended to terminate the container, delete that `venv` directory, then restart the container. 
+The virtual environment will be recreated and any `custom_scripts` should re-install their own requirements.
