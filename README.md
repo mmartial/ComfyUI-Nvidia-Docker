@@ -56,11 +56,11 @@ In the directory where we intend to run the container, create the `run` folder a
 That `run` folder will be populated with a few sub-directories created with the UID/GID passed on the command line (see the command line below). 
 Among the folders that will be created within `run` are `HF, ComfyUI, venv`
 - `HF` is the expected location of the `HF_HOME` (HuggingFace installation directory)
-- `ComfyUI` is the git clone version of tool, with all its sub-directories, among which:
+- `ComfyUI` is the git clone version of the tool, with all its sub-directories, among which:
   - `custom_nodes` for additional support nodes, for example ComfyUI-Manager,
   - `models` and all its sub-directories is where `checkpoints`, `clip`, `loras`, `unet`, etc have to be placed.
   - `input` and `output` are where input images are to be placed and generated images will end up. 
-- `venv` is the virtual environment and where all the required pyton packages for ComfyUI and other additions will be placed. A default ComfyUI package installation requires about 5GB of additional install in addition to the container itself; those packages will be in this `venv` folder.
+- `venv` is the virtual environment where all the required python packages for ComfyUI and other additions will be placed. A default ComfyUI package installation requires about 5GB of additional install in addition to the container itself; those packages will be in this `venv` folder.
 
 When starting the container image starts the `init.bash` script that performs a few operations:
 - Ensure we are able to use the `WANTED_UID` and `WANTED_GID` as the `comfy` user (the user set to run the container),
