@@ -166,9 +166,9 @@ Builds are available on DockerHub at [mmartial/comfyui-nvidia-docker](https://hu
 
 ### 3.3. Unraid availability
 
-The container has been tested on Unraid.
-I will update this when it has been added to the Community Apps.
-For the time being, if interested, you can see the template from https://raw.githubusercontent.com/mmartial/unraid-templates/main/templates/ComfyUI-Nvidia-Docker.xml
+The container has been tested on Unraid and [added to Community Apps an 2024-09-02](assets/Unraid_CA-ComfyUI-Nvidia-Docker.png).
+
+FYSA, if interested, you can see the template from https://raw.githubusercontent.com/mmartial/unraid-templates/main/templates/ComfyUI-Nvidia-Docker.xml
 
 
 ### 3.4. Nvidia base container
