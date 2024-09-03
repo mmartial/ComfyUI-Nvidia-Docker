@@ -12,7 +12,12 @@ You will know the ComfyUI WebUI is running when you check the `docker logs` and 
 **About 10GB of space is needed between the container and the virtual environment additional installation.**
 This does not take into account the models and other additional packages installation that the end user might perform.
 
-**It is recommended to re-run the container after first installation to enable the change to the ComfyUI Manager `security_leval` (we run it within a container, as such we need to expose the WebUI to 0.0.0.0)**
+**It is required to re-run the container after first installation to enable the change to the ComfyUI Manager `security_leval` (we run it within a container, as such we need to expose the WebUI to 0.0.0.0). Without this step, the tool will be unable to update/install content.**
+
+It is recommended to have a container monitoring tool available to watch the logs and see when installation are completed, or other relevant messages:
+some updates will take a long time (updating packages, downloading content, ...) and the lack of updates on the WebUI is not a sign of failure.
+[Dozzle](https://github.com/amir20/dozzle) is a good solution to follow the logs from a WebUI.
+
 
 - [1. Preamble](#1-preamble)
 - [2. Running the container](#2-running-the-container)
@@ -31,9 +36,10 @@ This does not take into account the models and other additional packages install
   - [5.1. Virtualenv](#51-virtualenv)
   - [5.2. user\_script.bash](#52-user_scriptbash)
   - [5.3. ComfyUI Manager](#53-comfyui-manager)
+  - [5.4. Additional FAQ](#54-additional-faq)
 - [6. Troubleshooting](#6-troubleshooting)
 
-## 1. Preamble
+# 1. Preamble
 
 This build is made to NOT run as the `root` user, but run within the container as a `comfy` user using the UID/GID requested at `docker run` time (if none are provided, the container will use 1024/1024).
 This is done to a allow end users to have local directory structures for all the side data (input, output, temp, user), Hugging Face `HF_HOME` if used, and the entire `models` being separate from the container and able to be altered by the user.
@@ -49,7 +55,7 @@ Note:
   - [FLUX.1[dev] with ComfyUI and Stability Matrix](https://blg.gkr.one/20240810-flux1dev/)
   - [FLUX.1 LoRA training](https://blg.gkr.one/20240818-flux_lora_training/)
 
-## 2. Running the container
+# 2. Running the container
 
 In the directory where we intend to run the container, create the `run` folder as the user that we want to share the UID/GID with **before running the container (the container is started as root, as such the folder if it does not exist will be created as root)** (or give it another name, just be adapt the `-v` mapping in the `docker run` below). 
 
@@ -74,7 +80,7 @@ When starting the container image starts the `init.bash` script that performs a 
 - Run the ComfyUI WebUI. For the exact command run, please see the last line of `init.bash`
 
 
-### 2.1. docker run
+## 2.1. docker run
 
 To run the container on an NVIDIA GPU, mounting the specified directory, exposing the port 8188 (change this by altering the `-p local:container` port mapping) and passing the calling user's UID and GID to the container:
 
@@ -82,7 +88,7 @@ To run the container on an NVIDIA GPU, mounting the specified directory, exposin
 docker run --rm -it --runtime nvidia --gpus all -v `pwd`/run:/comfy/mnt -e WANTED_UID=`id -u` -e WANTED_GID=`id -g` -p 8188:8188 --name comfyui-nvidia mmartial/comfyui-nvidia-docker:latest
 ```
 
-### 2.2. Docker compose
+## 2.2. Docker compose
 
 In the directory where you want to run the compose stack, create the `compose.yaml` file with the following content:
 
@@ -119,7 +125,7 @@ Start it with `docker compose up` (with `-detached` to run the container in the 
 
 Please see [docker compose up](https://docs.docker.com/reference/cli/docker/compose/up/) reference manual for additional details.
 
-### 2.3. First time use
+## 2.3. First time use
 
 The first time you run the container, going to the IP of our host on port 8188 (likely http://127.0.0.1:8188), we will see the latest run or the bottle generating example.
 
@@ -144,9 +150,9 @@ Depending on the workflow, and the needed files by the different nodes, some can
 For example, for checkpoints, those would go in the `run/ComfyUI/models/checkpoints` directory (the UI might need a click on the "Refresh" button to find those) before a "Queue Prompt". 
 Clicking on the model's filename in the "Checkpoint Loader" will show the list of available files in that folder.
 
-## 3. Docker image
+# 3. Docker image
 
-### 3.1. Building the image
+## 3.1. Building the image
 
 Note that a `docker buildx prune -f` might be needed to force a clean build after removing already existing containers.
 
@@ -160,18 +166,18 @@ Run:
 make latest
 ```
 
-### 3.2. Availability on DockerHub
+## 3.2. Availability on DockerHub
 
 Builds are available on DockerHub at [mmartial/comfyui-nvidia-docker](https://hub.docker.com/r/mmartial/comfyui-nvidia-docker), built from this repository's `Dockerfile`.
 
-### 3.3. Unraid availability
+## 3.3. Unraid availability
 
 The container has been tested on Unraid and [added to Community Apps an 2024-09-02](assets/Unraid_CA-ComfyUI-Nvidia-Docker.png).
 
 FYSA, if interested, you can see the template from https://raw.githubusercontent.com/mmartial/unraid-templates/main/templates/ComfyUI-Nvidia-Docker.xml
 
 
-### 3.4. Nvidia base container
+## 3.4. Nvidia base container
 
 Note that the original `Dockerfile` `FROM` is from Nvidia, as such:
 
@@ -181,21 +187,21 @@ By pulling and using the container, you accept the terms and conditions of this 
 https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
 ```
 
-## 4. Screenshots
+# 4. Screenshots
 
-### 4.1. First run: Bottle image
+## 4.1. First run: Bottle image
 
 ![First Run](assets/FirstRun.png)
 
-### 4.2. FLUX.1[dev] example
+## 4.2. FLUX.1[dev] example
 
 Template at [Flux example](https://comfyanonymous.github.io/ComfyUI_examples/flux/)
 
 ![Flux Dev example](assets/Flux1Dev-run.png)
 
-## 5. FAQ
+# 5. FAQ
 
-### 5.1. Virtualenv
+## 5.1. Virtualenv
 
 The container pip installs all required packages to the container, then creates a virtualenv (in `/comfy/mnt/venv` with `comfy/mnt` being mounted with the `docker run [...] -v`). 
 
@@ -203,7 +209,7 @@ This allows for installations of python packages using `pip3 install`.
 After running `docker exec -t comfy-nvidia /bin/bash` and from the provided `bash`, activate the `venv` with `source /comfy/mnt/venv/bin/activate`.
 From the `bash` prompt you can now run `pip3 freeze` or other `pip3` commands such as `pip3 install civitai`
 
-### 5.2. user_script.bash
+## 5.2. user_script.bash
 
 The `run/user_script.bash` user script can perform additional operations. 
 Because this is a Docker container, updating the container will remove any additional installations that are not in the "run" directory, so it is possible to force some reinstall at runtime.
@@ -245,7 +251,7 @@ exit 1
 
 The script will be placed in the base of the "run" directory, and must be named `user_script.bash` to be found.
 
-### 5.3. ComfyUI Manager
+## 5.3. ComfyUI Manager
 
 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager/) is installed and available in the container.
 
@@ -260,7 +266,14 @@ To do this:
 To use `cm-cli`, from the virtualenv, use: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py`.
 For example: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py show installed` (`COMFYUI_PATH=/ComfyUI` should be set)
 
-## 6. Troubleshooting
+## 5.4. Additional FAQ
+
+See [extras/FAQ.md] for additional FAQ topics, among which:
+- Updating ComfyUI
+- Updating ComfyUI-Manager
+- Installating a custom node from git
+
+# 6. Troubleshooting
 
 The `venv` in the "run" directory is where all the required python packages used by the tool are placed.
 In case of issue, it is recommended to terminate the container, delete that `venv` directory, then restart the container. 
