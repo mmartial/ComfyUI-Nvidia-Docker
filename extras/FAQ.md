@@ -5,7 +5,7 @@
 - [1. Installating components](#1-installating-components)
   - [1.1. Updating ComfyUI](#11-updating-comfyui)
   - [1.2. Updating ComfyUI Manager](#12-updating-comfyui-manager)
-  - [1.3. Installating a custom node from git](#13-installating-a-custom-node-from-git)
+  - [1.3. Installing a custom node from git](#13-installing-a-custom-node-from-git)
 - [2. Short list of custom nodes](#2-short-list-of-custom-nodes)
   - [2.1. ComfyUI\_bitsandbytes\_NF4](#21-comfyui_bitsandbytes_nf4)
 
@@ -34,7 +34,7 @@
 - Reload the webpage using your browser
 - Display the Manager again. In the news box (within manager, box on the right side), scroll down to see the version of ComfyUI-Manager that was installed.
 
-## 1.3. Installating a custom node from git
+## 1.3. Installing a custom node from git
 
 - On the ComfyUI canvas, select "Manager"
 - Select `Custom Nodes Manager`
