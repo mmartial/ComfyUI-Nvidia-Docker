@@ -8,9 +8,10 @@
   - [1.3. Installing a custom node from git](#13-installing-a-custom-node-from-git)
   - [1.4. Intalling a know custom node](#14-intalling-a-know-custom-node)
 - [2. Short list of custom nodes](#2-short-list-of-custom-nodes)
-  - [2.1. Crystools](#21-crystools)
-  - [2.2. ComfyUI\_bitsandbytes\_NF4](#22-comfyui_bitsandbytes_nf4)
-  - [2.3. FLUX.1-dev-gguf](#23-flux1-dev-gguf)
+  - [2.1. rgthree-comfy](#21-rgthree-comfy)
+  - [2.2. Crystools](#22-crystools)
+  - [2.3. ComfyUI\_bitsandbytes\_NF4](#23-comfyui_bitsandbytes_nf4)
+  - [2.4. FLUX.1-dev-gguf](#24-flux1-dev-gguf)
 
 # 1. Installating components
 
@@ -64,11 +65,24 @@ To see what is available:
 
 # 2. Short list of custom nodes
 
-## 2.1. Crystools
+## 2.1. rgthree-comfy
+
+URL: https://github.com/rgthree/rgthree-comfy
+
+A quality of life node as "a collection of nodes and improvements": Progress Bar (runs alongs the top of the app window), Reroute, Power Lora Loader, Power Prompt(s), 
+
+can be installed directly from ComfyUI Manager using the "known custom node" method:
+- Select `Custom Nodes Manager`
+- Type `rgthree` from the search bar
+- `rgthree` is the "Author"
+- `Select` and `Install`
+- Follow the steps after "Click Install" from "Installing a custom node from git"
+
+## 2.2. Crystools
 
 URL: https://github.com/crystian/ComfyUI-Crystools.git
 
-Quality of life update porviding "resources monitor, progress bar & time elapsed, ..."
+Quality of life node providing "resources monitor, progress bar & time elapsed, ..."
 
 Can be installed as a "known custom node" from the search menu.
 - Select `Custom Nodes Manager`
@@ -77,7 +91,7 @@ Can be installed as a "known custom node" from the search menu.
 - `Select` and `Install`
 - Follow the steps after "Click Install" from "Installing a custom node from git"
 
-## 2.2. ComfyUI_bitsandbytes_NF4
+## 2.3. ComfyUI_bitsandbytes_NF4
 
 URL: https://github.com/comfyanonymous/ComfyUI_bitsandbytes_NF4.git
 (deprecated in favor of GGUF)
@@ -86,7 +100,7 @@ Follow the "Installing a custom node from git"
 
 If possible, find a test workflow, obtain the required weights and after placing them in the expected location (see the "Running the container" section of the main [README.md](../README.md) for further details), `Queue Prompt`
 
-## 2.3. FLUX.1-dev-gguf
+## 2.4. FLUX.1-dev-gguf
 
 URL: https://github.com/city96/ComfyUI-GGUF.git
 
@@ -98,3 +112,4 @@ GGUF can be installed directly from ComfyUI Manager using the "known custom node
 - `city96` is the "Author"
 - `Select` and `Install`
 - Follow the steps after "Click Install" from "Installing a custom node from git"
+
