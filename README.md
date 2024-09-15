@@ -35,9 +35,13 @@ some updates will take a long time (updating packages, downloading content, ...)
 - [5. FAQ](#5-faq)
   - [5.1. Virtualenv](#51-virtualenv)
   - [5.2. user\_script.bash](#52-user_scriptbash)
-  - [5.3. ComfyUI Manager](#53-comfyui-manager)
-  - [5.4. Additional FAQ](#54-additional-faq)
+  - [5.3. Available environment variables](#53-available-environment-variables)
+    - [5.3.1. WANTED\_UID and WANTED\_GID](#531-wanted_uid-and-wanted_gid)
+    - [5.3.2. COMFY\_CMDLINE\_BASE and COMFY\_CMDLINE\_XTRA](#532-comfy_cmdline_base-and-comfy_cmdline_xtra)
+  - [5.4. ComfyUI Manager](#54-comfyui-manager)
+  - [5.5. Additional FAQ](#55-additional-faq)
 - [6. Troubleshooting](#6-troubleshooting)
+- [7. Changelog](#7-changelog)
 
 # 1. Preamble
 
@@ -251,7 +255,50 @@ exit 1
 
 The script will be placed in the base of the "run" directory, and must be named `user_script.bash` to be found.
 
-## 5.3. ComfyUI Manager
+If you encounter an error, it is recommended to check the container logs; this script must be executable and readable by the `comfy` user.
+The tool will attempt to make it executable if it is not, but if the file is owned by another user than `comfy` will fail.
+
+## 5.3. Available environment variables
+
+### 5.3.1. WANTED_UID and WANTED_GID
+
+The Linux User ID (`uid`) and Group ID (`gid`) that the `comfy` user used within the container will use.
+It is recommended to set those to the end-user's `uid` and `gid` to allow the addition of files, models, and other content within the `run` directory.
+The `run` directory itself must be created with those `uid` and `gid` for content to be able to be added within.
+
+Obtaining the running user's `uid` and `gid` can be done using `id -u` and `id -g` in a terminal.
+
+### 5.3.2. COMFY_CMDLINE_BASE and COMFY_CMDLINE_XTRA
+
+It is possible to add extra parameters by adding ComfyUI compatible command line arguments to the `COMFY_CMDLINE_XTRA` environment variable.
+For example: `docker run [...] -e COMFY_CMDLINE_XTRA="--fast --reserve-vram 2.0 --lowvram"`
+
+The default command line used by the script to start ComfyUI is `python3 ./main.py --listen 0.0.0.0 --disable-auto-launch`
+This is also the default value set to the `COMFY_CMDLINE_BASE` variable during the initialization script. **It is recommended to not alter the value of this `COMFY_CMDLINE_BASE` variable** as this might prevent the tool from starting succesfully.
+
+The tool will run the combination of COMFY_CMDLINE_BASE followed by COMFY_CMDLINE_XTRA. In the above example:
+```bash
+python3 ./main.py --listen 0.0.0.0 --disable-auto-launch --fast --reserve-vram 2.0 --lowvram
+```
+
+In case of container failure, it is recommended to check the container logs for error messages.
+
+The tool does not attempt to resolve quotes or special shell characters, as such it is recommended to prefer the use of the `user_script.bash` method.
+
+It is also possible to use the environment variables in combination with the `users_script.bash` by 1) not starting ComfyUI from the script and 2) exiting with `exit 0` (ie succes) which will allow the rest of the script to continue. The following example installs additional Ubuntu packages and allow for the environment variables to be used:
+
+```bash
+#!/bin/bash
+
+#echo "== Adding system package"
+DEBIAN_FRONTEND=noninteractive sudo apt-get update
+DEBIAN_FRONTEND=noninteractive sudo apt-get install -y libgl1 libglib2.0-0
+
+# Exit with an "okay" status to allow the init script to run the regular ComfyUI command
+exit 0
+```
+
+## 5.4. ComfyUI Manager
 
 [ComfyUI Manager](https://github.com/ltdrdata/ComfyUI-Manager/) is installed and available in the container.
 
@@ -266,7 +313,7 @@ To do this:
 To use `cm-cli`, from the virtualenv, use: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py`.
 For example: `python3 /comfy/mnt/custom_nodes/ComfyUI-Manager/cm-cli.py show installed` (`COMFYUI_PATH=/ComfyUI` should be set)
 
-## 5.4. Additional FAQ
+## 5.5. Additional FAQ
 
 See [extras/FAQ.md] for additional FAQ topics, among which:
 - Updating ComfyUI
@@ -278,3 +325,10 @@ See [extras/FAQ.md] for additional FAQ topics, among which:
 The `venv` in the "run" directory is where all the required python packages used by the tool are placed.
 In case of issue, it is recommended to terminate the container, delete that `venv` directory, then restart the container. 
 The virtual environment will be recreated and any `custom_scripts` should re-install their own requirements.
+
+# 7. Changelog
+
+- 20240915: Added `COMFY_CMDLINE_BASE` and `COMFY_CMDLINE_XTRA` variable
+- 20240824: Tag 0.2: shift to pull at first run-time, user upgradable with lighter base container
+- 20240824: Tag 0.1: builds were based on ComfyUI release, not user upgradable
+- 20240810: Initial Release

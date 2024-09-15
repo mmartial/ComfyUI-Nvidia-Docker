@@ -10,10 +10,47 @@ error_exit() {
 whoami=`whoami`
 script_dir=$(dirname $0)
 script_name=$(basename $0)
+echo "======================================"
+echo "==================="
 echo "== Running ${script_name} in ${script_dir} as ${whoami}"
 script_fullname=$0
 cmd_wuid=$1
 cmd_wgid=$2
+cmd_cmdline_base=$3
+cmd_cmdline_xtra=$4
+
+# everyone can read our files by default
+umask 0022
+
+# Write a world-writeable file (preferably inside /tmp within the container)
+write_worldtmpfile() {
+  tmpfile=$1
+  if [ -z "${tmpfile}" ]; then error_exit "write_worldfile: missing argument"; fi
+  if [ -f $tmpfile ]; then rm -f $tmpfile; fi
+  echo -n $2 > ${tmpfile}
+  chmod 777 ${tmpfile}
+}
+
+itdir=/tmp/comfy_init
+if [ ! -d $itdir ]; then mkdir $itdir; chmod 777 $itdir; fi
+if [ ! -d $itdir ]; then error_exit "Failed to create $itdir"; fi
+
+it=$itdir/comfy_cmdline_base
+if [ ! -z "$cmd_cmdline_base" ]; then COMFY_CMDLINE_BASE=`cat $cmd_cmdline_base`; else cmd_cmdline_base=$it;  fi
+if [ -z ${COMFY_CMDLINE_BASE+x} ]; then COMFY_CMDLINE_BASE="python3 ./main.py --listen 0.0.0.0 --disable-auto-launch"; fi
+if [ !  -z ${COMFY_CMDLINE_BASE+x} ]; then write_worldtmpfile $it "$COMFY_CMDLINE_BASE"; fi
+if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
+COMFY_CMDLINE_BASE=`cat $it`
+echo "-- COMFY_CMDLINE_BASE: \"${COMFY_CMDLINE_BASE}\""
+
+it=$itdir/comfy_cmdline_xtra
+if [ ! -z "$cmd_cmdline_xtra" ]; then COMFY_CMDLINE_XTRA=`cat $cmd_cmdline_xtra`; else cmd_cmdline_xtra=$it; fi
+if [ -z ${COMFY_CMDLINE_XTRA+x} ]; then COMFY_CMDLINE_XTRA=""; fi
+if [ ! -z ${COMFY_CMDLINE_XTRA+x} ]; then write_worldtmpfile $it "$COMFY_CMDLINE_XTRA"; fi
+if [ ! -f $it ]; then error_exit "$it missing, exiting"; fi
+COMFY_CMDLINE_XTRA=`cat $it`
+echo "-- COMFY_CMDLINE_XTRA: \"${COMFY_CMDLINE_XTRA}\""
+
 
 if [ -z "$WANTED_UID" ]; then WANTED_UID=$cmd_wuid; fi
 if [ -z "$WANTED_UID" ]; then echo "-- No WANTED_UID provided, using comfy user default of 1024"; WANTED_UID=1024; fi
@@ -28,7 +65,7 @@ if [ "A${whoami}" == "Acomfytoo" ]; then
   # Make the comfy user (the Docker USER) have the proper UID/GID as well
   sudo usermod -u ${WANTED_UID} -o -g ${WANTED_GID} comfy
   # restart the script as comfy (Docker USER) with the correct UID/GID this time
-  sudo su comfy $script_fullname $WANTED_UID $WANTED_GID && exit
+  sudo su comfy $script_fullname ${WANTED_UID} ${WANTED_GID} ${cmd_cmdline_base} ${cmd_cmdline_xtra} && exit
 fi
 
 it=/etc/image_base.txt
@@ -63,7 +100,7 @@ if [ $do_change == "True" ]; then
   sudo useradd -u ${WANTED_UID} -o -g ${WANTED_GID} -s /bin/bash -d ${COMFYUSER_DIR} -M comfytoo
   sudo adduser comfytoo sudo
   # Reload the script to bypass limitation (and exit)
-  sudo su comfytoo $script_fullname ${WANTED_UID} ${WANTED_GID} && exit
+  sudo su comfytoo $script_fullname ${WANTED_UID} ${WANTED_GID} ${cmd_cmdline_base} ${cmd_cmdline_xtra} && exit
 fi
 
 new_gid=`id -g`
@@ -105,6 +142,7 @@ pip3 install --upgrade pip || error_exit "Pip upgrade failed"
 export PATH=${COMFYUSER_DIR}/.local/bin:${PATH}
 
 # Verify the variables
+echo "==================="
 echo "== Environment details:"
 echo -n "  PATH: "; echo $PATH
 echo -n "  Python version: "; python3 --version
@@ -146,11 +184,16 @@ echo -n "== Container directory: "; pwd
 it=${COMFYUSER_DIR}/mnt/user_script.bash
 echo "== Checking for user script: ${it}"
 if [ -f $it ]; then
+  if [ ! -x $it ]; then
+    echo "== Attempting to make user script executable"
+    chmod +x $it || error_exit "Failed to make user script executable"
+  fi
   echo "  Running user script: ${it}"
-  chmod +x $it
   $it || error_exit "User script failed or exited with an error (possibly on purpose to avoid running the default ComfyUI command)"
 fi
 
+echo "==================="
 echo "== Running ComfyUI"
 # Full list of CLI options at https://github.com/comfyanonymous/ComfyUI/blob/master/comfy/cli_args.py
-python3 ./main.py --listen 0.0.0.0 --disable-auto-launch
+echo "-- Running: ${COMFY_CMDLINE_BASE} ${COMFY_CMDLINE_XTRA}"
+${COMFY_CMDLINE_BASE} ${COMFY_CMDLINE_XTRA} || error_exit "ComfyUI failed or exited with an error"
