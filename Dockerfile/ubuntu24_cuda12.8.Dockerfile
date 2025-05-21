@@ -94,10 +94,10 @@ RUN groupadd -g 1024 comfy \
     && groupadd -g 1025 comfytoo
 
 # The comfy (resp. comfytoo) user will have UID 1024 (resp. 1025),
-# be part of the comfy (resp. comfytoo) and users groups and be sudo capable
+# be part of the comfy (resp. comfytoo) and users groups
+# comfytoo user is sudo capable, comfy user is not.
 RUN useradd -u 1024 -d /home/comfy -g comfy -s /bin/bash -m comfy \
-    && usermod -G users comfy \
-    && adduser comfy sudo
+    && usermod -G users comfy
 RUN useradd -u 1025 -d /home/comfytoo -g comfytoo -s /bin/bash -m comfytoo \
     && usermod -G users comfytoo \
     && adduser comfytoo sudo

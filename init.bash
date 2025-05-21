@@ -230,7 +230,7 @@ fi
 # If a command line override was provided, run it
 if [ -f $cmd_override_file ]; then
   echo "-- Running provided command line override from $cmd_override_file"
-  sudo chmod +x $cmd_override_file || error_exit "Failed to make $cmd_override_file executable"
+  chmod +x $cmd_override_file || error_exit "Failed to make $cmd_override_file executable"
   $cmd_override_file
   # This is a complete override of the script, exit right after
   exit 0
@@ -249,7 +249,9 @@ dir_validate() { # arg1 = directory to validate / arg2 = "mount" or ""; a "mount
 
   if [ "A$2" == "A" ] && [ -f /etc/comfy_force_chown ]; then
     echo "  ++ Attempting to recursively set ownership of $testdir to ${WANTED_UID}:${WANTED_GID} (might take a long time)"
-    sudo chown -R ${WANTED_UID}:${WANTED_GID} "$testdir" || error_exit "Failed to set owner of $testdir"
+    # sudo chown -R ${WANTED_UID}:${WANTED_GID} "$testdir" || error_exit "Failed to set owner of $testdir"
+    echo "  INFO: Ownership of $testdir not changed by comfy user. Initial ownership should be set by comfytoo or root."
+    echo "  INFO: If FORCE_CHOWN was intended, this specific recursive chown by 'comfy' user is disabled as 'comfy' does not have sudo rights."
   fi
 
   # check if the directory is owned by WANTED_UID/WANTED_GID
