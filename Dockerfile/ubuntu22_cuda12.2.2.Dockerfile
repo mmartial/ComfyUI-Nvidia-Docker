@@ -64,7 +64,6 @@ COPY --chmod=555 config.sh /comfyui-nvidia_config.sh
 
 ##### ComfyUI preparation
 # Every sudo group user does not need a password
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Create a new group for the comfy and comfytoo users
 RUN groupadd -g 1024 comfy \ 
@@ -83,6 +82,8 @@ ENV COMFYUSER_DIR="/comfy"
 RUN mkdir -p ${COMFYUSER_DIR}
 RUN it="/etc/comfyuser_dir"; echo ${COMFYUSER_DIR} > $it && chmod 555 $it
 
+USER comfytoo
+
 ENV NVIDIA_DRIVER_CAPABILITIES="all"
 ENV NVIDIA_VISIBLE_DEVICES=all
 
@@ -94,7 +95,6 @@ RUN echo "COMFYUI_NVIDIA_DOCKER_VERSION: ${COMFYUI_NVIDIA_DOCKER_VERSION}" | tee
 
 # We start as comfytoo and will switch to the comfy user AFTER the container is up
 # and after having altered the comfy details to match the requested UID/GID
-USER comfytoo
 
 # We use ENTRYPOINT to run the init script (from CMD)
 ENTRYPOINT [ "/comfyui-nvidia_init.bash" ]
