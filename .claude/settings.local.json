@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 30 podman compose up)",
+      "Bash(timeout 90 podman compose up)",
+      "Bash(podman version:*)",
+      "Bash(podman info:*)",
+      "Bash(podman run:*)",
+      "Read(//home/marcstreeter/.config/containers/**)",
+      "Read(//var/home/marcstreeter/.config/containers/**)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(nvidia-ctk runtime:*)"
+    ]
+  }
+}

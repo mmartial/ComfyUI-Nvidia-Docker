@@ -4,7 +4,7 @@ services:
     # latest points to ubuntu24_cuda12.6.3-latest
     # other tags are available, such as ubuntu24_cuda13.0-latest
     # See README.md for more information
-    image: mmartial/comfyui-nvidia-docker:latest
+    image: mmartial/comfyui-nvidia-docker:ubuntu24_cuda12.8-latest
     container_name: comfyui-nvidia
     ports:
       - 8188:8188
@@ -13,6 +13,9 @@ services:
       - ./basedir:/basedir
 #      - /usr/lib/wsl:/usr/lib/wsl # Required for Windows Subsystem for Linux 2
     restart: unless-stopped
+    security_opt:
+      - label=disable
+    userns_mode: keep-id
 #    extra_hosts:
 #      - ollama.internal:10.12.13.14 # method to add extra hosts to the container for external services (useful for Ollama's node: use http://ollama.internal:11434)
     environment:
@@ -33,7 +36,8 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
       # Arguments to pass to ComfyUI
-#      - COMFY_CMDLINE_EXTRA=--disable-api-nodes --fast fp16_accumulation --normalvram --reserve-vram 1 --fp16-vae --cuda-malloc 
+#      - COMFY_CMDLINE_EXTRA=--disable-api-nodes --fast fp16_accumulation --normalvram --reserve-vram 1 --fp16-vae --cuda-malloc
+      # - COMFY_CMDLINE_EXTRA=--use-sage-attention
 # Have ComfyUI listen on 127.0.0.1:8181 and use socat to expose the service on 0.0.0.0:8188 (Default: false)
 #      - USE_SOCAT=false 
 # Force change directory ownership as the comfy user during script startup (Default: false)
@@ -50,9 +54,17 @@ services:
 #      - HF_TOKEN=hf_... # set your huggingface token to avoid rate limiting
 # This is set by default, do not change it if you intend to install custom nodes
 #      - NETWORK_MODE=personal_cloud
+    shm_size: '8gb'
+    devices:
+      - nvidia.com/gpu=all
     deploy:
       resources:
+        limits:
+          cpus: '14'
+          memory: 13G
         reservations:
+          cpus: '8'
+          memory: 8G
           devices:
             - driver: nvidia
               count: all

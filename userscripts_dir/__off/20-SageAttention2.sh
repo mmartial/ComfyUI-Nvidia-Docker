@@ -5,7 +5,7 @@
 
 # https://github.com/thu-ml/SageAttention
 sageattention_version="v2.2.0"
-#sageattention_version="2-git"
+sageattention_version="2-git"
 # To Install from git, uncomment the line above (this will create a folder called SageAttention-2-git)
 # this version is recommended for Blackwell hardware (and required for DGX Spark)
 # For Blackwell, also install 21-SageAttention3-BlackwellOnly.sh
