@@ -529,9 +529,6 @@ if [ ! -d "venv" ]; then
   echo $BUILD_BASE > venv/.build_base.txt
 fi
 
-echo "Installing comfy-cli"
-${PIP3_CMD} comfy-cli || error_exit "Failed to install comfy-cli"
-
 ##
 echo ""; echo "== Confirming venv is writeable"
 it_dir="${COMFYUSER_DIR}/mnt/venv"
@@ -565,6 +562,9 @@ echo "  PIP3_CMD: ${PIP3_CMD}"
 echo -n "  DISABLE_UPGRADES: "; echo ${DISABLE_UPGRADES}
 echo -n "  USE_PIPUPGRADE: "; echo ${USE_PIPUPGRADE}
 echo ""
+
+echo "Installing comfy-cli"
+${PIP3_CMD} comfy-cli || error_exit "Failed to install comfy-cli"
 
 export PIP3_CMD=${PIP3_CMD}
 run_userscript() {
