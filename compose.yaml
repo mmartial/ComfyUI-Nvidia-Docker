@@ -25,9 +25,9 @@ services:
       - BASE_DIRECTORY=/basedir
       # set SECURITY_LEVEL to normal (Default: normal)
       - SECURITY_LEVEL=normal
-      # Disabling new ComfyUI Manager parameters (update to ComfyUI >= 0.5.0 before using)
-      - USE_NEW_MANAGER=false
-      # in favor of legacy UI (without the new manager)
+      # Use the ComfyUI CLI (Default: false)
+      - USE_COMFY_CLI=true
+      # ComfyCLI will enable USE_NEW_MANAGER on frsh installs, so if you prefer the "legacy UI"
       - ENABLE_MANAGER_LEGACY_UI=true
       # NVIDIA GPU recommended parameters
       - NVIDIA_VISIBLE_DEVICES=all
