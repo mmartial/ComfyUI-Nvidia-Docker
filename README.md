@@ -191,7 +191,6 @@ It is recommended that a container monitoring tool be available to watch the log
     - [5.4.11. DISABLE\_UPGRADES](#5411-disable_upgrades)
     - [5.4.12. PREINSTALL\_TORCH and PREINSTALL\_TORCH\_CMD](#5412-preinstall_torch-and-preinstall_torch_cmd)
     - [5.4.13. UMASK](#5413-umask)
-    - [5.4.14. USE\_COMFY\_CLI](#5414-use_comfy_cli)
   - [5.5. ComfyUI Manager \& Security levels](#55-comfyui-manager--security-levels)
   - [5.6. Shell within the Docker image](#56-shell-within-the-docker-image)
     - [5.6.1. Alternate method](#561-alternate-method)
@@ -766,12 +765,6 @@ Please note that the `PREINSTALL_TORCH_CMD` variable is not added to the Unraid 
 
 The default `umask` is `0022` (files readable by others).
 The environment variable allows the override of this value to `0077` for example (no one but the user).
-### 5.4.14. USE_COMFY_CLI
-
-The `USE_COMFY_CLI` environment variable is used to enable the use of the `comfy` command line.
-On fresh installs, it will be used to install ComfyUI and the Manager (this will set `USE_NEW_MANAGER` to true) at the usual `run/ComfyUI` location, using [comfy-cli](https://github.com/Comfy-Org/comfy-cli) (via its `--workspace` option) instead of a plain `git clone`.
-
-It is currently not set to `true` by default. When enabled, `comfy-cli` is installed (via `PIP3_CMD`, so it follows `USE_UV` like any other package) once the virtual environment is ready, then used only to obtain/restore the ComfyUI checkout itself. Torch, `requirements.txt`, and ComfyUI Manager continue to be installed by this script's own logic (so `TORCH_LOCK`, `USE_UV`, and `USE_NEW_MANAGER` all behave the same either way).
 
 ## 5.5. ComfyUI Manager & Security levels
 
@@ -1045,7 +1038,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
-- 20260905: Added `USE_COMFY_CLI` environment variable to optionally install ComfyUI via [comfy-cli](https://github.com/Comfy-Org/comfy-cli)'s `--workspace` option instead of a plain `git clone`.
+- 20260905: Installation of the `comfy` CLI in the virtual env.
 - 20260805: Added compatibility for first Ubuntu 26.04 images + full ffmpeg/sqlite3 for sub-scripts + note: cu132 is now supported by uv but Comfy still prefers cu130 (torchaudio does not have a cu132 version)
 - 20260605: Added `UPDATE_UV` variable, moving `latest` to CUDA 12.9 release (following ["Introducing CUDA 13.2 and Deprecating CUDA 12.8 (Release 2.12)"](https://dev-discuss.pytorch.org/t/introducing-cuda-13-2-and-deprecating-cuda-12-8-release-2-12/3337) + deprecation of CUDA 12.2 release.
 - 20260509: As announced previously, updated `latest` to CUDA 12.8 release. No new features: maintenance release + updated CUDA 13.0. 13.1 and 13.2 versions.
