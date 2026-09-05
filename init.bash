@@ -427,41 +427,20 @@ if [ ! -z "${TORCH_LOCK}" ]; then
 fi
 
 ##
-USE_NEW_REPO_URL=${USE_NEW_REPO_URL:-"true"}
-USE_NEW_REPO_URL=`lc "${USE_NEW_REPO_URL}"`
-COMFY_REPO_NEW_URL="https://github.com/Comfy-Org/ComfyUI.git"
-COMFY_REPO_URL="https://github.com/comfyanonymous/ComfyUI.git"
-if [ "A${USE_NEW_REPO_URL}" == "Atrue" ]; then
-  COMFY_REPO_URL=${COMFY_REPO_NEW_URL}
-fi
+COMFY_REPO_URL="https://github.com/Comfy-Org/ComfyUI.git"
+
 it_dir="${COMFYUSER_DIR}/mnt"
-echo ""; echo "== Obtaining the latest version of ComfyUI (if folder not present)"
 cd $it_dir # ${COMFYUSER_DIR}/mnt -- stay here for the following checks/setups
+# The actual clone/restore is deferred until after the virtualenv is ready (see below):
+# USE_COMFY_CLI installs comfy-cli via pip, which needs a writeable venv to install into.
+NEW_COMFY_INSTALL=false
 if [ ! -d "ComfyUI" ]; then
-  echo ""; echo "== Cloning ComfyUI"
-  git clone ${COMFY_REPO_URL} ComfyUI || error_exit "ComfyUI clone failed"
-  if [ "$A{DISABLE_UPGRADES}" == "Atrue" ]; then
+  NEW_COMFY_INSTALL=true
+  if [ "A${DISABLE_UPGRADES}" == "Atrue" ]; then
     echo ""; echo "== This is a new installation, setting DISABLE_UPGRADES to false"
     DISABLE_UPGRADES=false
   fi
 fi
-
-##
-echo ""; echo "== Confirm the ComfyUI directory is present and we can write to it"
-it_dir="${COMFYUSER_DIR}/mnt/ComfyUI"
-dir_validate "${it_dir}" 
-it="${it_dir}/.testfile"; touch $it && rm -f $it || error_exit "Failed to write to ComfyUI directory as the comfy user"
-
-# Check that ComfyUI's remote is set to the correct one
-cdir="$(pwd)"
-cd "${it_dir}"
-if [ "$(git remote get-url origin)" != "${COMFY_REPO_URL}" ]; then
-  echo ""; echo "== ComfyUI's remote is not set to the correct one, updating to ${COMFY_REPO_URL}"
-  git remote set-url origin "${COMFY_REPO_URL}"
-fi
-echo -n "== ComfyUI origin set to: "; git remote get-url origin
-echo "   Expected: ${COMFY_REPO_URL}"
-cd "${cdir}"
 
 ##
 echo ""; echo "== Check on BASE_DIRECTORY (if used / if using \"$ignore_value\" then disable it)"
@@ -548,6 +527,48 @@ fi
 
 # extent the PATH to include the user local bin directory
 export PATH=${COMFYUSER_DIR}/.local/bin:${PATH}
+
+##
+echo "Installing comfy-cli"
+${PIP3_CMD} comfy-cli || error_exit "Failed to install comfy-cli"
+
+##
+echo ""; echo "== Obtaining the latest version of ComfyUI (if folder not present)"
+cd "${COMFYUSER_DIR}/mnt"
+USE_COMFY_CLI=${USE_COMFY_CLI:-"false"}
+USE_COMFY_CLI=`lc "${USE_COMFY_CLI}"`
+if [ "A${USE_COMFY_CLI}" == "Atrue" ]; then
+  if [ "A$USE_UV" == "Atrue" ]; then
+    echo ""; echo "== Using comfy-cli to install ComfyUI (with uv)"
+    comfy_extra="--fast-deps"
+  else
+    echo ""; echo "== Using comfy-cli to install ComfyUI"
+    comfy_extra=""
+  fi
+
+  comfy $comfy_extra --workspace="${COMFYUSER_DIR}/mnt/ComfyUI" --skip-prompt install --restore --nvidia || error_exit "comfy-cli ComfyUI install/restore failed"
+  echo ""; echo "== comfy-cli ComfyUI install completed -- setting USE_NEW_MANAGER to true"
+  USE_NEW_MANAGER=true
+elif [ "A${NEW_COMFY_INSTALL}" == "Atrue" ]; then
+  echo ""; echo "== Cloning ComfyUI"
+  git clone ${COMFY_REPO_URL} ComfyUI || error_exit "ComfyUI clone failed"
+fi
+
+echo ""; echo "== Confirm the ComfyUI directory is present and we can write to it"
+it_dir="${COMFYUSER_DIR}/mnt/ComfyUI"
+dir_validate "${it_dir}"
+it="${it_dir}/.testfile"; touch $it && rm -f $it || error_exit "Failed to write to ComfyUI directory as the comfy user"
+
+# Check that ComfyUI's remote is set to the correct one
+cdir="$(pwd)"
+cd "${it_dir}"
+if [ "$(git remote get-url origin)" != "${COMFY_REPO_URL}" ]; then
+  echo ""; echo "== ComfyUI's remote is not set to the correct one, updating to ${COMFY_REPO_URL}"
+  git remote set-url origin "${COMFY_REPO_URL}"
+fi
+echo -n "== ComfyUI origin set to: "; git remote get-url origin
+echo "   Expected: ${COMFY_REPO_URL}"
+cd "${cdir}"
 
 # Verify the variables
 echo ""; echo ""; echo "==================="
