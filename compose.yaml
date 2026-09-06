@@ -22,13 +22,13 @@ services:
       - WANTED_UID=1000
       - WANTED_GID=1000
       # enable BASE_DIRECTORY and sets it to use the mount point to your basedir
-      - BASE_DIRECTORY: /basedir
+      - BASE_DIRECTORY=/basedir
       # set SECURITY_LEVEL to normal (Default: normal)
-      - SECURITY_LEVEL: normal
+      - SECURITY_LEVEL=normal
       # Disabling new ComfyUI Manager parameters (update to ComfyUI >= 0.5.0 before using)
-      - USE_NEW_MANAGER: false
+      - USE_NEW_MANAGER=true
       # in favor of legacy UI (without the new manager)
-      - ENABLE_MANAGER_LEGACY_UI: true
+      - ENABLE_MANAGER_LEGACY_UI=true
       # NVIDIA GPU recommended parameters
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
