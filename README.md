@@ -112,9 +112,9 @@ If this version is incompatible with your container runtime, please see the list
 
 | tag | aka | build | note |
 | --- | --- | --- | --- |
-| ubuntu22_cuda12.2-latest | | linux/amd64 | Ubuntu 22 base image, depreacted as of `20260605` release -- see `Dockerfile/_off` for last used version |
-| ubuntu22_cuda12.3-latest | | linux/amd64 | To be depreacted in 2026 | 
-| ubuntu22_cuda12.4-latest | | linux/amd64 | To be depreacted in 2026 | 
+| ubuntu22_cuda12.2-latest | | linux/amd64 | Ubuntu 22 base image, deprecated as of `20260605` release -- see `Dockerfile/_off` for last used version |
+| ubuntu22_cuda12.3-latest | | linux/amd64 | Deprecated as of `20260906` release -- see `Dockerfile/_off` for last used version | 
+| ubuntu22_cuda12.4-latest | | linux/amd64 | Deprecated as of `20260906` release -- see `Dockerfile/_off` for last used version | 
 | ubuntu24_cuda12.5-latest | | linux/amd64 | Ubuntu 24 base image, was `latest` up to `20250320` release |
 | ubuntu24_cuda12.6-latest | | linux/amd64 | was `latest` up to `20260509` release |
 | ubuntu24_cuda12.8-latest | | linux/amd64 | was `latest` up to `20260605` release -- minimum required for Blackwell (inc RTX 50xx) hardware (see "Blackwell support" section) |
@@ -599,6 +599,8 @@ This directory is used to run independent user scripts in order to perform addit
 Each script differs, so it is recommended to read the comments at the beginining of each script to understand what it does and how to use it (in particular, some will not perform compilation if a previous version of the download folder is present).
 
 A few scripts are provided in the `userscripts_dir` folder:
+- [05-customnodes_fixer.sh](userscripts_dir/11-onnxruntime-gpu.sh): will attempt to go into all the custom nodes installation folders and install their `requirements.txt`
+- [06-manager_csrf_patch.sh](userscripts_dir/06-manager_csrf_patch.sh), fixes ComfyUI-Manager 4.2.x CSRF NoneType crash when updating with legacy UI.
 - [11-onnxruntime-gpu.sh](userscripts_dir/11-onnxruntime-gpu.sh)
 - [12-xformers.sh](userscripts_dir/12-xformers.sh)
 - [13-nunchaku.sh](userscripts_dir/13-nunchaku.sh), is required to allow the installation of the `nunchaku` custom node.
@@ -1059,7 +1061,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
-- 20260905: Installation of the `comfy` CLI in the virtual env (no release)
+- 20260906: Installation of the `comfy` CLI in the virtual env + temporary addition: `userscripts_dir/06-manager_csrf_patch.sh` that fixes ComfyUI-Manager 4.2.x CSRF NoneType crash when updating with legacy UI + Deprecation of remaining Ubuntu 22 based images
 - 20260805: Added compatibility for first Ubuntu 26.04 images + full ffmpeg/sqlite3 for sub-scripts + note: cu132 is now supported by uv but Comfy still prefers cu130 (torchaudio does not have a cu132 version)
 - 20260605: Added `UPDATE_UV` variable, moving `latest` to CUDA 12.9 release (following ["Introducing CUDA 13.2 and Deprecating CUDA 12.8 (Release 2.12)"](https://dev-discuss.pytorch.org/t/introducing-cuda-13-2-and-deprecating-cuda-12-8-release-2-12/3337) + deprecation of CUDA 12.2 release.
 - 20260509: As announced previously, updated `latest` to CUDA 12.8 release. No new features: maintenance release + updated CUDA 13.0. 13.1 and 13.2 versions.
