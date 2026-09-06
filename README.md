@@ -157,6 +157,7 @@ It is recommended that a container monitoring tool be available to watch the log
     - [2.2.1. podman run](#221-podman-run)
     - [2.2.2. podman compose up](#222-podman-compose-up)
   - [2.3. First time use](#23-first-time-use)
+  - [2.4. comfy CLI](#24-comfy-cli)
 - [3. Docker image](#3-docker-image)
   - [3.1. Building the image](#31-building-the-image)
     - [3.1.1. Using the Makefile](#311-using-the-makefile)
@@ -368,6 +369,26 @@ Depending on the workflow, some "custom nodes" might be needed. Those should usu
 Other needed files could be found on [HuggingFace](https://huggingface.co/) or [CivitAI](https://civitai.com/).
 
 "Custom nodes" should be installed using the "Manager". The ability to install those manually depends on the `security_levels` selected.
+
+## 2.4. comfy CLI
+
+The container comes with the `comfy` CLI, which allows end users to run commands against the ComfyUI installation.
+
+To get to the CLI:
+
+```bash
+# Get inside the running container (adapat name as needed)
+docker exec -it comfyui-nvidia /bin/bash
+
+# Become the comfy user and activate the venv
+sudo su comfy
+source /comfy/mnt/venv/bin/activate
+
+# Update comfy
+comfy update comf
+```
+
+Note that currently `comfy` does not support the `based-directory` option, so `comfy node` commands will not work.
 
 # 3. Docker image
 
@@ -1038,7 +1059,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
-- 20260905: Installation of the `comfy` CLI in the virtual env.
+- 20260905: Installation of the `comfy` CLI in the virtual env (no release)
 - 20260805: Added compatibility for first Ubuntu 26.04 images + full ffmpeg/sqlite3 for sub-scripts + note: cu132 is now supported by uv but Comfy still prefers cu130 (torchaudio does not have a cu132 version)
 - 20260605: Added `UPDATE_UV` variable, moving `latest` to CUDA 12.9 release (following ["Introducing CUDA 13.2 and Deprecating CUDA 12.8 (Release 2.12)"](https://dev-discuss.pytorch.org/t/introducing-cuda-13-2-and-deprecating-cuda-12-8-release-2-12/3337) + deprecation of CUDA 12.2 release.
 - 20260509: As announced previously, updated `latest` to CUDA 12.8 release. No new features: maintenance release + updated CUDA 13.0. 13.1 and 13.2 versions.
