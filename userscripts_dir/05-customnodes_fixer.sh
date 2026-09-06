@@ -32,7 +32,7 @@ else
   echo "== Using pip"
 fi
 
-# Find custom nodes with requirements.txt or pyproject.toml in /basedir/custom_nodes
+# Find custom nodes with requirements.txt in /basedir/custom_nodes
 # list all folders in /basedir/custom_nodes, ignore __pycache__
 
 todo=$(ls -d /basedir/custom_nodes/* | grep -v __pycache__)
