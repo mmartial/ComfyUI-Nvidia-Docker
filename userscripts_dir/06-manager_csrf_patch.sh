@@ -86,7 +86,7 @@ if old not in src:
     raise SystemExit("expected line not found")
 # copy the original file to a backup before patching
 date = __import__('datetime').datetime.now().strftime("%Y%m%d%H%M%S")
-backup_path = path.with_suffix(path.suffix + ".bak.${date}")
+backup_path = path.with_suffix(path.suffix + f".bak.{date}")
 backup_path.write_text(src)
 print(f"backup created at {backup_path}")
 path.write_text(src.replace(old, new, 1))
