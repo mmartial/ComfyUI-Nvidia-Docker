@@ -455,8 +455,9 @@ it="${it_dir}/.testfile"; touch $it && rm -f $it || error_exit "Failed to write 
 # Check that ComfyUI's remote is set to the correct one
 cdir="$(pwd)"
 cd "${it_dir}"
-if [ "$(git remote get-url origin)" != "${COMFY_REPO_URL}" ]; then
-  echo ""; echo "== ComfyUI's remote is not set to the correct one, updating to ${COMFY_REPO_URL}"
+git_remote=$(git remote get-url origin 2>/dev/null)
+if [ "A${git_remote}" != "A${COMFY_REPO_URL}" ]; then
+  echo ""; echo "== ComfyUI's remote ($git_remote) is not set to the expected value, updating to ${COMFY_REPO_URL}"
   git remote set-url origin "${COMFY_REPO_URL}"
 fi
 echo -n "== ComfyUI origin set to: "; git remote get-url origin
@@ -820,7 +821,10 @@ if [ "A${SWITCHED_VENV}" == "Afalse" ]; then
 else 
   cm_cli=${COMFYUI_PATH}/custom_nodes/ComfyUI-Manager/cm-cli.py
   if [ ! -z "$BASE_DIRECTORY" ]; then it=${BASE_DIRECTORY}/custom_nodes/ComfyUI-Manager/cm-cli.py ; if [ -f $it ]; then cm_cli=$it; fi; fi
-  if [ -f $cm_cli ]; then
+  it="/comfy/mnt/venv/bin/cm-cli"; if [ -f $it ]; then cm_cli="/not_at_file"; fi
+  if [ "A${cm_cli}" == "A/not_at_file" ]; then
+    echo "== ComfyUI-Manager CLI is part of the virtual environment (new manager) and is to be used with the comfy cli which currently does NOT support the base-directory option, skipping. Prefer: userscripts_dir/05-customnodes_fixer.sh"
+  elif [ -f $cm_cli ]; then
     echo "== Running ComfyUI-Manager CLI to fix installed custom nodes"
     python3 $cm_cli fix all || echo "ComfyUI-Manager CLI failed -- in case of issue with custom nodes: use 'Manager -> Custom Nodes Manager -> Filter: Import Failed -> Try Fix' from the WebUI"
   else
@@ -905,6 +909,13 @@ if [ ! -z "$BASE_DIRECTORY" ]; then
   export COMFY_CMDLINE_EXTRA="${COMFY_CMDLINE_EXTRA} --base-directory $BASE_DIRECTORY"
   echo "!! COMFY_CMDLINE_EXTRA extended, make sure to use it in user script (if any): ${COMFY_CMDLINE_EXTRA}"
 fi
+
+# Using comfy CLI to set some default values -- does not set basedir, unable to update nodes?
+echo ""; echo "== Using comfy CLI to set some default values"
+comfy set-default /comfy/mnt/ComfyUI
+comfy setup --where local --project-dir /basedir -y
+comfy tracking disable
+comfy --install-completion
 
 if [ "A${USE_NEW_MANAGER}" == "Atrue" ]; then
   echo "== Using new ComfyUI Manager's required command line addition: --enable-manager"
