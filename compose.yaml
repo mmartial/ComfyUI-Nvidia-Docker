@@ -23,8 +23,13 @@ services:
       - WANTED_GID=1000
       # enable BASE_DIRECTORY and sets it to use the mount point to your basedir
       - BASE_DIRECTORY=/basedir
+      # SECURITY_LEVEL has been deprecated in favor of ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL, but is still listed for backward compatibility. See https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md
       # set SECURITY_LEVEL to normal (Default: normal)
       - SECURITY_LEVEL=normal
+      - ALLOW_GIT_URL_INSTALL=false
+      - ALLOW_PIP_INSTALL=false
+      # if using SECURITY_LEVEL=weak, you can enable ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL to true to allow installing nodes from git URLs and pip packages (Default: false).
+      # Any use of SECURITY_LEVEL=weak or ALLOW_GIT_URL_INSTALL=true or ALLOW_PIP_INSTALL=true will automatically enable USE_SOCAT=true to allow ComfyUI to listen on localhost only. This will be needed until https://github.com/Comfy-Org/ComfyUI-Manager/issues/3023 is resolved
       # Disabling new ComfyUI Manager parameters (update to ComfyUI >= 0.5.0 before using)
       - USE_NEW_MANAGER=true
       # in favor of legacy UI (without the new manager)

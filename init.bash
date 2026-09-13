@@ -84,6 +84,24 @@ SECURITY_LEVEL=${SECURITY_LEVEL:-"normal"}
 write_worldtmpfile $it "$SECURITY_LEVEL"
 echo "-- SECURITY_LEVEL: \"${SECURITY_LEVEL}\""
 
+# allow_git_url_install
+it=$itdir/comfy_allow_git_url_install
+if [ -z "${ALLOW_GIT_URL_INSTALL+x}" ]; then
+  if [ -f $it ]; then ALLOW_GIT_URL_INSTALL=$(cat $it); fi
+fi
+ALLOW_GIT_URL_INSTALL=${ALLOW_GIT_URL_INSTALL:-false}
+write_worldtmpfile $it "$ALLOW_GIT_URL_INSTALL"
+echo "-- ALLOW_GIT_URL_INSTALL: \"${ALLOW_GIT_URL_INSTALL}\""
+
+# allow_pip_install
+it=$itdir/comfy_allow_pip_install
+if [ -z "${ALLOW_PIP_INSTALL+x}" ]; then
+  if [ -f $it ]; then ALLOW_PIP_INSTALL=$(cat $it); fi
+fi
+ALLOW_PIP_INSTALL=${ALLOW_PIP_INSTALL:-false}
+write_worldtmpfile $it "$ALLOW_PIP_INSTALL"
+echo "-- ALLOW_PIP_INSTALL: \"${ALLOW_PIP_INSTALL}\""
+
 # Set network mode
 it=$itdir/comfy_network_mode
 if [ -z "${NETWORK_MODE+x}" ]; then
@@ -257,6 +275,13 @@ if [ -f $cmd_override_file ]; then
 fi
 
 ######## Environment variables (consume AFTER the load_env)
+
+# if SECURITY_LEVEL is set to weak OR ALLOW_GIT_URL_INSTALL is set to true OR ALLOW_PIP_INSTALL is set to true, enable USE_SOCAT
+if [ "${SECURITY_LEVEL:-normal}" = "weak" ] || [ "${ALLOW_GIT_URL_INSTALL:-false}" = "true" ] || [ "${ALLOW_PIP_INSTALL:-false}" = "true" ]; then
+  echo "== Security level is weak or ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, enabling USE_SOCAT and forcing SECURITY_LEVEL to weak"
+  USE_SOCAT="true"
+  SECURITY_LEVEL="weak"
+fi
 
 # Default behavior: listen on 0.0.0.0
 USE_SOCAT=${USE_SOCAT:-"false"}
@@ -810,6 +835,14 @@ else
   perl -p -i -e 's%^network_mode\s*=.+$%network_mode = '${NETWORK_MODE}'%g' $cm_conf
   echo -n "  -- ComfyUI-Manager (should show: ${NETWORK_MODE}): "
   grep network_mode $cm_conf
+  # ALLOW_GIT_URL_INSTALL
+  perl -p -i -e 's%^allow_git_url_install\s*=.+$%allow_git_url_install = '${ALLOW_GIT_URL_INSTALL}'%g' $cm_conf
+  echo -n "  -- ComfyUI-Manager (should show: ${ALLOW_GIT_URL_INSTALL}): "
+  grep allow_git_url_install $cm_conf
+  # ALLOW_PIP_INSTALL
+  perl -p -i -e 's%^allow_pip_install\s*=.+$%allow_pip_install = '${ALLOW_PIP_INSTALL}'%g' $cm_conf
+  echo -n "  -- ComfyUI-Manager (should show: ${ALLOW_PIP_INSTALL}): "
+  grep allow_pip_install $cm_conf
 fi
 
 # Attempt to use ComfyUI Manager CLI to fix all installed nodes -- This must be done within the activated virtualenv
@@ -965,7 +998,7 @@ save_env $it
 if [ "A${USE_SOCAT}" == "Atrue" ]; then
   echo ""; echo "==================="
   echo "== Running socat"
-  socat TCP4-LISTEN:8188,fork TCP4:127.0.0.1:8181 &
+  socat TCP4-LISTEN:8188,fork,reuseaddr TCP4:127.0.0.1:8181,retry=30,interval=1,forever &
 fi
 
 echo ""; echo "==================="
