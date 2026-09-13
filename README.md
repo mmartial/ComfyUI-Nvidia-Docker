@@ -780,9 +780,12 @@ It will also check the version of CUDA supported by the container such that for 
 
 This option is enabled by default. It can be disabled by setting `PREINSTALL_TORCH=false`.
 
-The `PREINSTALL_TORCH_CMD` environment variable can be used to override the torch installation command with the one specified in the variable. For example for GTX 1080, try to use `PREINSTALL_TORCH_CMD=pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`. It is likely also recommended to not set `USE_PIPUPGRADE=false` in this case.
+The `PREINSTALL_TORCH_CMD` environment variable can be used to override the torch installation command with the one specified in the variable. For example for GTX 1080, try to use `PREINSTALL_TORCH_CMD=torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0`. It is likely also recommended to not set `USE_PIPUPGRADE=false` in this case.
 
-Please note that the `PREINSTALL_TORCH_CMD` variable is not added to the Unraid template, and must be manually added if used.
+Notes:
+
+- instead of useing `PREINSTALL_TORCH_CMD`, it is likely preferrable to use the `TORCH_LOCK` option.
+- the `PREINSTALL_TORCH_CMD` variable is not added to the Unraid template, and must be manually added if used.
 
 ### 5.4.13. UMASK
 
