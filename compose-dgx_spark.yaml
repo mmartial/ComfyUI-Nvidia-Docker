@@ -3,6 +3,9 @@ services:
   comfyui-nvidia:
     image: mmartial/comfyui-nvidia-docker:ubuntu24_cuda13.1-dgx-latest
     container_name: comfyui-nvidia
+    # Run tini as PID 1 so SIGTERM/SIGINT (docker stop/restart) are forwarded
+    # to init.bash's children (socat, ComfyUI) and orphaned processes get reaped
+    init: true
     ports:
       - 8188:8188
     volumes:
