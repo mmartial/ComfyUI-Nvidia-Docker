@@ -185,13 +185,14 @@ It is recommended that a container monitoring tool be available to watch the log
     - [5.4.4. COMFY\_CMDLINE\_BASE and COMFY\_CMDLINE\_EXTRA](#544-comfy_cmdline_base-and-comfy_cmdline_extra)
     - [5.4.5. BASE\_DIRECTORY](#545-base_directory)
     - [5.4.6. SECURITY\_LEVEL](#546-security_level)
-    - [5.4.7. TORCH\_LOCK](#547-torch_lock)
-    - [5.4.8. USE\_SOCAT](#548-use_socat)
-    - [5.4.9. FORCE\_CHOWN](#549-force_chown)
-    - [5.4.10. USE\_PIPUPGRADE](#5410-use_pipupgrade)
-    - [5.4.11. DISABLE\_UPGRADES](#5411-disable_upgrades)
-    - [5.4.12. PREINSTALL\_TORCH and PREINSTALL\_TORCH\_CMD](#5412-preinstall_torch-and-preinstall_torch_cmd)
-    - [5.4.13. UMASK](#5413-umask)
+    - [5.4.7. ALLOW\_GIT\_URL\_INSTALL and ALLOW\_PIP\_INSTALL](#547-allow_git_url_install-and-allow_pip_install)
+    - [5.4.8. TORCH\_LOCK](#548-torch_lock)
+    - [5.4.9. USE\_SOCAT](#549-use_socat)
+    - [5.4.10. FORCE\_CHOWN](#5410-force_chown)
+    - [5.4.11. USE\_PIPUPGRADE](#5411-use_pipupgrade)
+    - [5.4.12. DISABLE\_UPGRADES](#5412-disable_upgrades)
+    - [5.4.13. PREINSTALL\_TORCH and PREINSTALL\_TORCH\_CMD](#5413-preinstall_torch-and-preinstall_torch_cmd)
+    - [5.4.14. UMASK](#5414-umask)
   - [5.5. ComfyUI Manager \& Security levels](#55-comfyui-manager--security-levels)
   - [5.6. Shell within the Docker image](#56-shell-within-the-docker-image)
     - [5.6.1. Alternate method](#561-alternate-method)
@@ -634,6 +635,8 @@ Note: the file is loaded AFTER the environment variables set on the command line
 
 ### 5.4.1. USE_UV
 
+Authorized values: true false
+
 The `USE_UV` environment variable is used to enable the use of `uv` instead of `pip`.
 
 [`uv`](https://docs.astral.sh/uv/) is a fast, all-in-one Python package & project manager written in Rust. It aims to replace a whole stack of python tools with a single binary that is faster than pip in many cases.
@@ -657,6 +660,8 @@ The running user's `uid` and `gid` can be obtained using `id -u` and `id -g` in 
 **Note:** It is not recommended to override the default starting user of the script (`comfytoo`), as it is used to set up the `comfy` user to run with the provided `WANTED_UID` and `WANTED_GID`. The script checks for the `comfytoo` user to do so, then after restarting as the `comfy` user, the script checks that the `comfy` user has the correct `uid` and `gid` and will fail if it has not been able to set it up.
 
 ### 5.4.3. USE_NEW_MANAGER
+
+Authorized values: true false
 
 Since ComfyUI 0.5.0, ComfyUI Manager has been integrated into the main ComfyUI application. 
 To use it, set the `USE_NEW_MANAGER` environment variable to `true`.
@@ -715,13 +720,27 @@ The same logic can be applied to the `input`, `output`, `user`, and `custom_node
 
 ### 5.4.6. SECURITY_LEVEL
 
+Authorized values: normal normal- weak strong
+
 After the initial run, the `SECURITY_LEVEL` environment variable can be used to alter the default security level imposed by ComfyUI Manager.
 
 When following the rules defined at https://github.com/ltdrdata/ComfyUI-Manager?tab=readme-ov-file#security-policy the user should decide if `normal` will work for their use case. 
 You will prefer ' weak ' if you manually install or alter custom nodes.
 **WARNING: Using `normal-` will prevent access to the WebUI unless the USE_SOCAT environment variable is set to `true`.**
 
-### 5.4.7. TORCH_LOCK
+### 5.4.7. ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL
+
+Authorized values: true false
+
+Support for new "security policy: dedicatet install flags (`allow_git_url_install` and `allow_pip_install`)"
+
+From https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md 
+
+> These surfaces additionally require a loopback listener (--listen on a loopback IP such as 127.0.0.1 or ::1 — not a general LAN/private address)
+
+Enabling either will enable `USE_SOCAT` to support the requirement to listen ONLY on 127.0.0.1
+
+### 5.4.8. TORCH_LOCK
 
 The `TORCH_LOCK` environment variable can be used to lock torch components to a specific version.
 
@@ -736,9 +755,9 @@ This will create a `/comfy/mnt/torch_lock.txt` file (ie in the user's `run` fold
 That same `PIP3_CMD` is also used by the `userscript_dir` files.
 If you manually install python packages, you should use the copy and use the value of the `PIP3_CMD` environment variable (printed by the `init.bash` script during the container's run) to make sure that the specified versions of torch, torchvision and torchaudio are not modified. At minumum, add the `--constraint /comfy/mnt/torch_lock.txt` flag to the `pip install` command.
 
-When you decide to remove the `TORCH_LOCK` environment variable, it is recommended to also remove the `torch_lock.txt` file in the `run` folder.
+### 5.4.9. USE_SOCAT
 
-### 5.4.8. USE_SOCAT
+Authorized values: true false
 
 The `USE_SOCAT` environment variable is used to enable an alternate service behavior: have ComfyUI listen on `127.0.0.1:8181` and use `socat` to expose the service on `0.0.0.0:8188`.
 
@@ -746,17 +765,19 @@ The default is to run ComfyUI within the container to listen on `0.0.0.0:8188` (
 
 Some `SECURITY_LEVEL` settings might prevent access to the WebUI unless the tool is running on `127.0.0.1` (i.e., only the host). The `USE_SOCAT=true` environment variable can be used to support this behavior.
 
-### 5.4.9. FORCE_CHOWN
+### 5.4.10. FORCE_CHOWN
+
+Authorized values: true false
 
 The `FORCE_CHOWN` environment variable is used to force change directory ownership as the `comfy` user during script startup (this process might be slow).
 
 This option was added to support users who mount the `run` and `basedir` folders onto other hosts which might not respect the UID/GID of the `comfy` user.
 
-When set with any non empty value other than `false`, `FORCE_CHOWN` will be enabled.
-
 When set, it will "force chown" every sub-folder in the `run` and `basedir` folders when it first attempt to access them before verifying they are owned by the proper user.
 
-### 5.4.10. USE_PIPUPGRADE
+### 5.4.11. USE_PIPUPGRADE
+
+Authorized values: true false
 
 The `USE_PIPUPGRADE` environment variable is used to enable the use of `pip3 install --upgrade` to upgrade ComfyUI and other Python packages to the latest version during startup. If not set, it will use `pip3 install` to install packages.
 
@@ -764,7 +785,9 @@ This option is enabled by default as with the sepraation of the UI from the Core
 
 It can be disabled by setting `USE_PIPUPGRADE=false`.
 
-### 5.4.11. DISABLE_UPGRADES
+### 5.4.12. DISABLE_UPGRADES
+
+Authorized values: true false
 
 The `DISABLE_UPGRADES` environment variable is used to disable upgrades when starting the container (also disables `USE_PIPUPGRADE` and `PREINSTALL_TORCH`).
 
@@ -772,7 +795,9 @@ This option is disabled by default (set to `false`) as it is recommended to keep
 
 It is recommended to only use it on an installation after its initial setup (especially if you plan to use `PREINSTALL_TORCH`: it will bypass this step as well), as it will attempt to prevent Comfy and other Python packages from being upgraded outside of the WebUI. Any package update will have to be performed through the WebUI (ComfyUI Manager).
 
-### 5.4.12. PREINSTALL_TORCH and PREINSTALL_TORCH_CMD
+### 5.4.13. PREINSTALL_TORCH and PREINSTALL_TORCH_CMD
+
+PREINSTALL_TORCH Authorized values: true false
 
 The `PREINSTALL_TORCH` environment variable will attempt to automatically install/upgrade `torch` after the virtual environment is created.
 
@@ -780,11 +805,14 @@ It will also check the version of CUDA supported by the container such that for 
 
 This option is enabled by default. It can be disabled by setting `PREINSTALL_TORCH=false`.
 
-The `PREINSTALL_TORCH_CMD` environment variable can be used to override the torch installation command with the one specified in the variable. For example for GTX 1080, try to use `PREINSTALL_TORCH_CMD=pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126`. It is likely also recommended to not set `USE_PIPUPGRADE=false` in this case.
+The `PREINSTALL_TORCH_CMD` environment variable can be used to override the torch installation command with the one specified in the variable. For example for GTX 1080, try to use `PREINSTALL_TORCH_CMD=torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0`. It is likely also recommended to not set `USE_PIPUPGRADE=false` in this case.
 
-Please note that the `PREINSTALL_TORCH_CMD` variable is not added to the Unraid template, and must be manually added if used.
+Notes:
 
-### 5.4.13. UMASK
+- instead/in addition of using `PREINSTALL_TORCH_CMD`, it is likely preferrable to use the `TORCH_LOCK` option.
+- the `PREINSTALL_TORCH_CMD` variable is not added to the Unraid template (`TORCH_LOCK` is).
+
+### 5.4.14. UMASK
 
 The default `umask` is `0022` (files readable by others).
 The environment variable allows the override of this value to `0077` for example (no one but the user).
@@ -1061,6 +1089,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
+- 20260913: Added `ALLOW_GIT_URL_INSTALL` and `ALLOW_PIP_INSTALL` to support new [security policy](https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md) (enabling either will force `USE_SOCAT`) + Added `init: true` to all Compose files for clean signal forwarding + added enforcement of "authorized values" for variables
 - 20260906: Installation of the `comfy` CLI in the virtual env + temporary addition: `userscripts_dir/06-manager_csrf_patch.sh` that fixes ComfyUI-Manager 4.2.x CSRF NoneType crash when updating with legacy UI + Deprecation of remaining Ubuntu 22 based images
 - 20260805: Added compatibility for first Ubuntu 26.04 images + full ffmpeg/sqlite3 for sub-scripts + note: cu132 is now supported by uv but Comfy still prefers cu130 (torchaudio does not have a cu132 version)
 - 20260605: Added `UPDATE_UV` variable, moving `latest` to CUDA 12.9 release (following ["Introducing CUDA 13.2 and Deprecating CUDA 12.8 (Release 2.12)"](https://dev-discuss.pytorch.org/t/introducing-cuda-13-2-and-deprecating-cuda-12-8-release-2-12/3337) + deprecation of CUDA 12.2 release.

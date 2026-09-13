@@ -15,6 +15,20 @@ ok_exit() {
   exit 0
 }
 
+lc() { echo "$1" | tr '[:upper:]' '[:lower:]'; }
+
+# Verify a variable's value is one of a space-separated list of allowed values
+# Usage: check_valid_value "VAR_NAME" "${VAR_NAME}" "allowed1 allowed2 ..."
+check_valid_value() {
+  var_name="$1"
+  value="$2"
+  allowed="$3"
+  for a in $allowed; do
+    if [ "A${value}" == "A${a}" ]; then return 0; fi
+  done
+  error_exit "${var_name} has invalid value \"${value}\", expected one of: ${allowed}"
+}
+
 # Load config (must have at least ENV_IGNORELIST and ENV_OBFUSCATE_PART set)
 it=/comfyui-nvidia_config.sh
 if [ -f $it ]; then
@@ -81,8 +95,32 @@ if [ -z "${SECURITY_LEVEL+x}" ]; then
   if [ -f $it ]; then SECURITY_LEVEL=$(cat $it); fi
 fi
 SECURITY_LEVEL=${SECURITY_LEVEL:-"normal"}
+SECURITY_LEVEL=`lc "${SECURITY_LEVEL}"`
+check_valid_value "SECURITY_LEVEL" "${SECURITY_LEVEL}" "normal normal- weak strong"
 write_worldtmpfile $it "$SECURITY_LEVEL"
 echo "-- SECURITY_LEVEL: \"${SECURITY_LEVEL}\""
+
+# allow_git_url_install
+it=$itdir/comfy_allow_git_url_install
+if [ -z "${ALLOW_GIT_URL_INSTALL+x}" ]; then
+  if [ -f $it ]; then ALLOW_GIT_URL_INSTALL=$(cat $it); fi
+fi
+ALLOW_GIT_URL_INSTALL=${ALLOW_GIT_URL_INSTALL:-false}
+ALLOW_GIT_URL_INSTALL=`lc "${ALLOW_GIT_URL_INSTALL}"`
+check_valid_value "ALLOW_GIT_URL_INSTALL" "${ALLOW_GIT_URL_INSTALL}" "true false"
+write_worldtmpfile $it "$ALLOW_GIT_URL_INSTALL"
+echo "-- ALLOW_GIT_URL_INSTALL: \"${ALLOW_GIT_URL_INSTALL}\""
+
+# allow_pip_install
+it=$itdir/comfy_allow_pip_install
+if [ -z "${ALLOW_PIP_INSTALL+x}" ]; then
+  if [ -f $it ]; then ALLOW_PIP_INSTALL=$(cat $it); fi
+fi
+ALLOW_PIP_INSTALL=${ALLOW_PIP_INSTALL:-false}
+ALLOW_PIP_INSTALL=`lc "${ALLOW_PIP_INSTALL}"`
+check_valid_value "ALLOW_PIP_INSTALL" "${ALLOW_PIP_INSTALL}" "true false"
+write_worldtmpfile $it "$ALLOW_PIP_INSTALL"
+echo "-- ALLOW_PIP_INSTALL: \"${ALLOW_PIP_INSTALL}\""
 
 # Set network mode
 it=$itdir/comfy_network_mode
@@ -197,18 +235,25 @@ load_env() {
   fi
 }
 
-lc() { echo "$1" | tr '[:upper:]' '[:lower:]'; }
-FORCE_CHOWN=${FORCE_CHOWN:-"false"} # any value works, empty value or false means disabled
+FORCE_CHOWN=${FORCE_CHOWN:-"false"}
 FORCE_CHOWN=`lc "${FORCE_CHOWN}"`
+check_valid_value "FORCE_CHOWN" "${FORCE_CHOWN}" "true false"
 
 # comfytoo is a specfiic user not existing by default on ubuntu, we can check its whomai
 if [ "A${whoami}" == "Acomfytoo" ]; then 
   echo "-- Running as comfytoo, will switch comfy to the desired UID/GID"
   # The script is started as comfytoo -- UID/GID 1025/1025
   
-  if [ "A${FORCE_CHOWN}" != "Afalse" ]; then
+  if [ "A${FORCE_CHOWN}" == "Atrue" ]; then
     echo "-- Force chown mode enabled, will force change directory ownership as comfy user during script rerun (might be slow)"
     sudo touch /etc/comfy_force_chown
+  else
+    if [ -f /etc/comfy_force_chown ]; then
+      echo "-- Force chown mode disabled, but /etc/comfy_force_chown present, deleting it to avoid force change directory ownership as comfy user during script rerun"
+      sudo rm -f /etc/comfy_force_chown
+    else
+      echo "-- Force chown mode disabled, will NOT force change directory ownership as comfy user during script rerun"
+    fi
   fi
 
   # We are altering the UID/GID of the comfy user to the desired ones and restarting as comfy
@@ -258,9 +303,17 @@ fi
 
 ######## Environment variables (consume AFTER the load_env)
 
+# if ALLOW_GIT_URL_INSTALL is set to true OR ALLOW_PIP_INSTALL is set to true, enable USE_SOCAT
+if [ "${ALLOW_GIT_URL_INSTALL:-false}" = "true" ] || [ "${ALLOW_PIP_INSTALL:-false}" = "true" ]; then
+  echo "== ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, enabling USE_SOCAT and forcing SECURITY_LEVEL to weak"
+  USE_SOCAT="true"
+  SECURITY_LEVEL="weak"
+fi
+
 # Default behavior: listen on 0.0.0.0
 USE_SOCAT=${USE_SOCAT:-"false"}
 USE_SOCAT=`lc "${USE_SOCAT}"`
+check_valid_value "USE_SOCAT" "${USE_SOCAT}" "true false"
 if [ "A${USE_SOCAT}" == "Atrue" ]; then
   LISTEN_ADDRESS="127.0.0.1"
   LISTEN_PORT="8181"
@@ -361,6 +414,7 @@ fi
 ##
 DISABLE_UPGRADES=${DISABLE_UPGRADES:-"false"}
 DISABLE_UPGRADES=`lc "${DISABLE_UPGRADES}"`
+check_valid_value "DISABLE_UPGRADES" "${DISABLE_UPGRADES}" "true false"
 if [ "A${DISABLE_UPGRADES}" == "Atrue" ]; then
   echo "== Using alternate behavior: Disabling upgrade (including disabling USE_PIPUPGRADE)"
   USE_PIPUPGRADE="false"
@@ -372,7 +426,10 @@ PIP3_BASE="pip3"
 ## uv setup
 USE_UV=${USE_UV:-"false"}
 USE_UV=`lc "${USE_UV}"`
+check_valid_value "USE_UV" "${USE_UV}" "true false"
 UPDATE_UV=${UPDATE_UV:-"true"}
+UPDATE_UV=`lc "${UPDATE_UV}"`
+check_valid_value "UPDATE_UV" "${UPDATE_UV}" "true false"
 if [ "A${USE_UV}" == "Atrue" ]; then
   if [ "A${UPDATE_UV}" == "Atrue" ]; then
     echo "== Updating uv"
@@ -409,6 +466,7 @@ fi
 
 USE_PIPUPGRADE=${USE_PIPUPGRADE:-"true"}
 USE_PIPUPGRADE=`lc "${USE_PIPUPGRADE}"`
+check_valid_value "USE_PIPUPGRADE" "${USE_PIPUPGRADE}" "true false"
 DEFAULT_PIP3_CMD="${PIP3_BASE} install --trusted-host pypi.org --trusted-host files.pythonhosted.org"
 if [ "A${USE_PIPUPGRADE}" == "Atrue" ]; then
   PIP3_CMD="${DEFAULT_PIP3_CMD} --upgrade"
@@ -424,11 +482,17 @@ if [ ! -z "${TORCH_LOCK}" ]; then
   echo "${TORCH_LOCK}" | tr ' ' '\n' > ${COMFYUSER_DIR}/mnt/torch_lock.txt
   PIP3_CMD="${PIP3_CMD} --constraint ${COMFYUSER_DIR}/mnt/torch_lock.txt"
   echo "== Updated PIP3_CMD with constraints: \"${PIP3_CMD}\""
+else
+  if [ -f ${COMFYUSER_DIR}/mnt/torch_lock.txt ]; then
+    echo "== TORCH_LOCK not set: removing existing constraint file"
+    rm -f ${COMFYUSER_DIR}/mnt/torch_lock.txt
+  fi
 fi
 
 ##
 USE_NEW_REPO_URL=${USE_NEW_REPO_URL:-"true"}
 USE_NEW_REPO_URL=`lc "${USE_NEW_REPO_URL}"`
+check_valid_value "USE_NEW_REPO_URL" "${USE_NEW_REPO_URL}" "true false"
 COMFY_REPO_NEW_URL="https://github.com/Comfy-Org/ComfyUI.git"
 COMFY_REPO_URL="https://github.com/comfyanonymous/ComfyUI.git"
 if [ "A${USE_NEW_REPO_URL}" == "Atrue" ]; then
@@ -626,7 +690,7 @@ ${PIP3_CMD} packaging || error_exit "Failed to install packaging"
 ${PIP3_CMD} Cython || error_exit "Failed to install Cython"
 # Addressing: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead.
 ${PIP3_CMD} nvidia-ml-py || error_exit "Failed to install nvidia-ml-py"
-# Manually remove `pynvml` after a `dockr exec`
+# Manually remove `pynvml` after a `docker exec`
 # % sudo su comfy
 # % source /comfy/mnt/venv/bin/activate
 # % uv pip uninstall pynvml
@@ -682,10 +746,14 @@ if [ "A${DISABLE_UPGRADES}" == "Atrue" ]; then
   echo "== Torch upgrade disabled by DISABLE_UPGRADES"
 else
   PREINSTALL_TORCH=${PREINSTALL_TORCH:-"true"}
+  PREINSTALL_TORCH=`lc "${PREINSTALL_TORCH}"`
+  check_valid_value "PREINSTALL_TORCH" "${PREINSTALL_TORCH}" "true false"
   if [ "A${PREINSTALL_TORCH}" == "Atrue" ]; then
     echo ""; echo "== Pre-installing/Upgrading torch"
-    # Allow the override of the torch installation command
-    if [ ! -z "${PREINSTALL_TORCH_CMD+x}" ]; then
+    # Allow the override of the torch installation command: PREINSTALL_TORCH_CMD must not be an empty string to be used
+    PREINSTALL_TORCH_CMD=${PREINSTALL_TORCH_CMD:-""}
+    if [ ! -z "${PREINSTALL_TORCH_CMD}" ]; then
+      echo "== Using PREINSTALL_TORCH_CMD: ${PREINSTALL_TORCH_CMD}"
       it="${PREINSTALL_TORCH_CMD}"
       # fix: recommendation was to use "pip3 install ..." must remove "pip3 install" from the command
       it=${it//pip3 install/}
@@ -728,6 +796,12 @@ export COMFYUI_PATH=`pwd`
 echo ""; echo "-- COMFYUI_PATH: ${COMFYUI_PATH}"
 
 USE_NEW_MANAGER=${USE_NEW_MANAGER:-"false"}
+USE_NEW_MANAGER=`lc "${USE_NEW_MANAGER}"`
+check_valid_value "USE_NEW_MANAGER" "${USE_NEW_MANAGER}" "true false"
+
+ENABLE_MANAGER_LEGACY_UI=${ENABLE_MANAGER_LEGACY_UI:-"false"}
+ENABLE_MANAGER_LEGACY_UI=`lc "${ENABLE_MANAGER_LEGACY_UI}"`
+check_valid_value "ENABLE_MANAGER_LEGACY_UI" "${ENABLE_MANAGER_LEGACY_UI}" "true false"
 
 # if the legacy manager is not installed, we will install the new manager instead
 customnodes_dir=${COMFYUI_PATH}/custom_nodes
@@ -810,6 +884,14 @@ else
   perl -p -i -e 's%^network_mode\s*=.+$%network_mode = '${NETWORK_MODE}'%g' $cm_conf
   echo -n "  -- ComfyUI-Manager (should show: ${NETWORK_MODE}): "
   grep network_mode $cm_conf
+  # ALLOW_GIT_URL_INSTALL
+  perl -p -i -e 's%^allow_git_url_install\s*=.+$%allow_git_url_install = '${ALLOW_GIT_URL_INSTALL}'%g' $cm_conf
+  echo -n "  -- ComfyUI-Manager (should show: ${ALLOW_GIT_URL_INSTALL}): "
+  grep allow_git_url_install $cm_conf
+  # ALLOW_PIP_INSTALL
+  perl -p -i -e 's%^allow_pip_install\s*=.+$%allow_pip_install = '${ALLOW_PIP_INSTALL}'%g' $cm_conf
+  echo -n "  -- ComfyUI-Manager (should show: ${ALLOW_PIP_INSTALL}): "
+  grep allow_pip_install $cm_conf
 fi
 
 # Attempt to use ComfyUI Manager CLI to fix all installed nodes -- This must be done within the activated virtualenv
@@ -965,7 +1047,7 @@ save_env $it
 if [ "A${USE_SOCAT}" == "Atrue" ]; then
   echo ""; echo "==================="
   echo "== Running socat"
-  socat TCP4-LISTEN:8188,fork TCP4:127.0.0.1:8181 &
+  socat TCP4-LISTEN:8188,fork,reuseaddr TCP4:127.0.0.1:8181,retry=30,interval=1,forever &
 fi
 
 echo ""; echo "==================="
