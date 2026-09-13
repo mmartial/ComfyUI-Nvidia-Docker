@@ -15,6 +15,20 @@ ok_exit() {
   exit 0
 }
 
+lc() { echo "$1" | tr '[:upper:]' '[:lower:]'; }
+
+# Verify a variable's value is one of a space-separated list of allowed values
+# Usage: check_valid_value "VAR_NAME" "${VAR_NAME}" "allowed1 allowed2 ..."
+check_valid_value() {
+  var_name="$1"
+  value="$2"
+  allowed="$3"
+  for a in $allowed; do
+    if [ "A${value}" == "A${a}" ]; then return 0; fi
+  done
+  error_exit "${var_name} has invalid value \"${value}\", expected one of: ${allowed}"
+}
+
 # Load config (must have at least ENV_IGNORELIST and ENV_OBFUSCATE_PART set)
 it=/comfyui-nvidia_config.sh
 if [ -f $it ]; then
@@ -81,6 +95,8 @@ if [ -z "${SECURITY_LEVEL+x}" ]; then
   if [ -f $it ]; then SECURITY_LEVEL=$(cat $it); fi
 fi
 SECURITY_LEVEL=${SECURITY_LEVEL:-"normal"}
+SECURITY_LEVEL=`lc "${SECURITY_LEVEL}"`
+check_valid_value "SECURITY_LEVEL" "${SECURITY_LEVEL}" "normal normal- weak strong"
 write_worldtmpfile $it "$SECURITY_LEVEL"
 echo "-- SECURITY_LEVEL: \"${SECURITY_LEVEL}\""
 
@@ -90,6 +106,8 @@ if [ -z "${ALLOW_GIT_URL_INSTALL+x}" ]; then
   if [ -f $it ]; then ALLOW_GIT_URL_INSTALL=$(cat $it); fi
 fi
 ALLOW_GIT_URL_INSTALL=${ALLOW_GIT_URL_INSTALL:-false}
+ALLOW_GIT_URL_INSTALL=`lc "${ALLOW_GIT_URL_INSTALL}"`
+check_valid_value "ALLOW_GIT_URL_INSTALL" "${ALLOW_GIT_URL_INSTALL}" "true false"
 write_worldtmpfile $it "$ALLOW_GIT_URL_INSTALL"
 echo "-- ALLOW_GIT_URL_INSTALL: \"${ALLOW_GIT_URL_INSTALL}\""
 
@@ -99,6 +117,8 @@ if [ -z "${ALLOW_PIP_INSTALL+x}" ]; then
   if [ -f $it ]; then ALLOW_PIP_INSTALL=$(cat $it); fi
 fi
 ALLOW_PIP_INSTALL=${ALLOW_PIP_INSTALL:-false}
+ALLOW_PIP_INSTALL=`lc "${ALLOW_PIP_INSTALL}"`
+check_valid_value "ALLOW_PIP_INSTALL" "${ALLOW_PIP_INSTALL}" "true false"
 write_worldtmpfile $it "$ALLOW_PIP_INSTALL"
 echo "-- ALLOW_PIP_INSTALL: \"${ALLOW_PIP_INSTALL}\""
 
@@ -215,7 +235,6 @@ load_env() {
   fi
 }
 
-lc() { echo "$1" | tr '[:upper:]' '[:lower:]'; }
 FORCE_CHOWN=${FORCE_CHOWN:-"false"} # any value works, empty value or false means disabled
 FORCE_CHOWN=`lc "${FORCE_CHOWN}"`
 
@@ -286,6 +305,7 @@ fi
 # Default behavior: listen on 0.0.0.0
 USE_SOCAT=${USE_SOCAT:-"false"}
 USE_SOCAT=`lc "${USE_SOCAT}"`
+check_valid_value "USE_SOCAT" "${USE_SOCAT}" "true false"
 if [ "A${USE_SOCAT}" == "Atrue" ]; then
   LISTEN_ADDRESS="127.0.0.1"
   LISTEN_PORT="8181"
@@ -386,6 +406,7 @@ fi
 ##
 DISABLE_UPGRADES=${DISABLE_UPGRADES:-"false"}
 DISABLE_UPGRADES=`lc "${DISABLE_UPGRADES}"`
+check_valid_value "DISABLE_UPGRADES" "${DISABLE_UPGRADES}" "true false"
 if [ "A${DISABLE_UPGRADES}" == "Atrue" ]; then
   echo "== Using alternate behavior: Disabling upgrade (including disabling USE_PIPUPGRADE)"
   USE_PIPUPGRADE="false"
@@ -397,7 +418,10 @@ PIP3_BASE="pip3"
 ## uv setup
 USE_UV=${USE_UV:-"false"}
 USE_UV=`lc "${USE_UV}"`
+check_valid_value "USE_UV" "${USE_UV}" "true false"
 UPDATE_UV=${UPDATE_UV:-"true"}
+UPDATE_UV=`lc "${UPDATE_UV}"`
+check_valid_value "UPDATE_UV" "${UPDATE_UV}" "true false"
 if [ "A${USE_UV}" == "Atrue" ]; then
   if [ "A${UPDATE_UV}" == "Atrue" ]; then
     echo "== Updating uv"
@@ -434,6 +458,7 @@ fi
 
 USE_PIPUPGRADE=${USE_PIPUPGRADE:-"true"}
 USE_PIPUPGRADE=`lc "${USE_PIPUPGRADE}"`
+check_valid_value "USE_PIPUPGRADE" "${USE_PIPUPGRADE}" "true false"
 DEFAULT_PIP3_CMD="${PIP3_BASE} install --trusted-host pypi.org --trusted-host files.pythonhosted.org"
 if [ "A${USE_PIPUPGRADE}" == "Atrue" ]; then
   PIP3_CMD="${DEFAULT_PIP3_CMD} --upgrade"
@@ -454,6 +479,7 @@ fi
 ##
 USE_NEW_REPO_URL=${USE_NEW_REPO_URL:-"true"}
 USE_NEW_REPO_URL=`lc "${USE_NEW_REPO_URL}"`
+check_valid_value "USE_NEW_REPO_URL" "${USE_NEW_REPO_URL}" "true false"
 COMFY_REPO_NEW_URL="https://github.com/Comfy-Org/ComfyUI.git"
 COMFY_REPO_URL="https://github.com/comfyanonymous/ComfyUI.git"
 if [ "A${USE_NEW_REPO_URL}" == "Atrue" ]; then
@@ -707,6 +733,8 @@ if [ "A${DISABLE_UPGRADES}" == "Atrue" ]; then
   echo "== Torch upgrade disabled by DISABLE_UPGRADES"
 else
   PREINSTALL_TORCH=${PREINSTALL_TORCH:-"true"}
+  PREINSTALL_TORCH=`lc "${PREINSTALL_TORCH}"`
+  check_valid_value "PREINSTALL_TORCH" "${PREINSTALL_TORCH}" "true false"
   if [ "A${PREINSTALL_TORCH}" == "Atrue" ]; then
     echo ""; echo "== Pre-installing/Upgrading torch"
     # Allow the override of the torch installation command
@@ -753,6 +781,12 @@ export COMFYUI_PATH=`pwd`
 echo ""; echo "-- COMFYUI_PATH: ${COMFYUI_PATH}"
 
 USE_NEW_MANAGER=${USE_NEW_MANAGER:-"false"}
+USE_NEW_MANAGER=`lc "${USE_NEW_MANAGER}"`
+check_valid_value "USE_NEW_MANAGER" "${USE_NEW_MANAGER}" "true false"
+
+ENABLE_MANAGER_LEGACY_UI=${ENABLE_MANAGER_LEGACY_UI:-"false"}
+ENABLE_MANAGER_LEGACY_UI=`lc "${ENABLE_MANAGER_LEGACY_UI}"`
+check_valid_value "ENABLE_MANAGER_LEGACY_UI" "${ENABLE_MANAGER_LEGACY_UI}" "true false"
 
 # if the legacy manager is not installed, we will install the new manager instead
 customnodes_dir=${COMFYUI_PATH}/custom_nodes
