@@ -1,7 +1,7 @@
 services:
   comfyui-nvidia:
     # Use your preferred image tag
-    # latest points to ubuntu24_cuda12.6.3-latest
+    # check https://github.com/mmartial/ComfyUI-Nvidia-Docker to confirm what latest points to
     # other tags are available, such as ubuntu24_cuda13.0-latest
     # See README.md for more information
     image: mmartial/comfyui-nvidia-docker:latest
@@ -26,39 +26,41 @@ services:
       - WANTED_GID=1000
       # enable BASE_DIRECTORY and sets it to use the mount point to your basedir
       - BASE_DIRECTORY=/basedir
-      # SECURITY_LEVEL has been deprecated in favor of ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL, but is still listed for backward compatibility. See https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md
       # set SECURITY_LEVEL to normal (Default: normal)
       - SECURITY_LEVEL=normal
+      # SECURITY_LEVEL has been extended with ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL. See https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md
+      # if using SECURITY_LEVEL=weak, you can enable ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL to true to allow installing nodes from git URLs and pip packages (Default: false).
+      # Any use of SECURITY_LEVEL=weak or ALLOW_GIT_URL_INSTALL=true or ALLOW_PIP_INSTALL=true will automatically enable USE_SOCAT=true to allow ComfyUI to listen on localhost only
       - ALLOW_GIT_URL_INSTALL=false
       - ALLOW_PIP_INSTALL=false
-      # if using SECURITY_LEVEL=weak, you can enable ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL to true to allow installing nodes from git URLs and pip packages (Default: false).
-      # Any use of SECURITY_LEVEL=weak or ALLOW_GIT_URL_INSTALL=true or ALLOW_PIP_INSTALL=true will automatically enable USE_SOCAT=true to allow ComfyUI to listen on localhost only. This will be needed until https://github.com/Comfy-Org/ComfyUI-Manager/issues/3023 is resolved
-      # Disabling new ComfyUI Manager parameters (update to ComfyUI >= 0.5.0 before using)
+      # New ComfyUI Manager parameters (update to ComfyUI >= 0.5.0 before using)
       - USE_NEW_MANAGER=true
-      # in favor of legacy UI (without the new manager)
+      # But can still use its legacy UI
       - ENABLE_MANAGER_LEGACY_UI=true
       # NVIDIA GPU recommended parameters
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
       # Arguments to pass to ComfyUI
 #      - COMFY_CMDLINE_EXTRA=--disable-api-nodes --fast fp16_accumulation --normalvram --reserve-vram 1 --fp16-vae --cuda-malloc 
-# Have ComfyUI listen on 127.0.0.1:8181 and use socat to expose the service on 0.0.0.0:8188 (Default: false)
+      # Have ComfyUI listen on 127.0.0.1:8181 and use socat to expose the service on 0.0.0.0:8188 (Default: false)
 #      - USE_SOCAT=false 
-# Force change directory ownership as the comfy user during script startup (Default: false)
+      # Force change directory ownership as the comfy user during script startup (Default: false)
 #      - FORCE_CHOWN=false 
-# Upgrade ComfyUI and other Python packages to the latest version during startup (Default: true)
+      # Upgrade ComfyUI and other Python packages to the latest version during startup (Default: true)
 #      - USE_PIPUPGRADE=true 
-# Disable upgrades when starting the container (also disables USE_PIPUPGRADE) (Default: false)
+      # Disable upgrades when starting the container (also disables USE_PIPUPGRADE) (Default: false)
 #      - DISABLE_UPGRADES=false 
-# Automatically install/upgrade torch. (Default: true)
-#      - PREINSTALL_TORCH=true 
-# Required for Windows Subsystem for Linux 2
+      # Automatically install/upgrade torch. (Default: true)
+#      - PREINSTALL_TORCH=true
+      # Lock torch components to a specific version
+#      - TORCH_LOCK=torch==2.13.0+cu130 torchaudio==2.11.0+cu130 torchvision==0.28.0+cu130
+      # Required for Windows Subsystem for Linux 2
 #      - LD_LIBRARY_PATH=/usr/lib/wsl/lib 
-# Add extra environment variables if needed
+      # Add extra environment variables if needed
 #      - HF_TOKEN=hf_... # set your huggingface token to avoid rate limiting
-# This is set by default, do not change it if you intend to install custom nodes
+      # This is set by default, do not change it if you intend to install custom nodes
 #      - NETWORK_MODE=personal_cloud
-# Default umask: 0022 (files readable by others); allow override using the UMASK environment variable
+      # Default umask: 0022 (files readable by others); allow override using the UMASK environment variable
 #      - UMASK=0077
     deploy:
       resources:
