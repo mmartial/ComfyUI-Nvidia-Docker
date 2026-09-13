@@ -295,9 +295,9 @@ fi
 
 ######## Environment variables (consume AFTER the load_env)
 
-# if SECURITY_LEVEL is set to weak OR ALLOW_GIT_URL_INSTALL is set to true OR ALLOW_PIP_INSTALL is set to true, enable USE_SOCAT
-if [ "${SECURITY_LEVEL:-normal}" = "weak" ] || [ "${ALLOW_GIT_URL_INSTALL:-false}" = "true" ] || [ "${ALLOW_PIP_INSTALL:-false}" = "true" ]; then
-  echo "== Security level is weak or ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, enabling USE_SOCAT and forcing SECURITY_LEVEL to weak"
+# if ALLOW_GIT_URL_INSTALL is set to true OR ALLOW_PIP_INSTALL is set to true, enable USE_SOCAT
+if [ "${ALLOW_GIT_URL_INSTALL:-false}" = "true" ] || [ "${ALLOW_PIP_INSTALL:-false}" = "true" ]; then
+  echo "== ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, enabling USE_SOCAT and forcing SECURITY_LEVEL to weak"
   USE_SOCAT="true"
   SECURITY_LEVEL="weak"
 fi

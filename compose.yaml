@@ -30,7 +30,7 @@ services:
       - SECURITY_LEVEL=normal
       # SECURITY_LEVEL has been extended with ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL. See https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md
       # if using SECURITY_LEVEL=weak, you can enable ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL to true to allow installing nodes from git URLs and pip packages (Default: false).
-      # Any use of SECURITY_LEVEL=weak or ALLOW_GIT_URL_INSTALL=true or ALLOW_PIP_INSTALL=true will automatically enable USE_SOCAT=true to allow ComfyUI to listen on localhost only
+      # Any use of ALLOW_GIT_URL_INSTALL=true or ALLOW_PIP_INSTALL=true will automatically enable USE_SOCAT=true (and force SECURITY_LEVEL=weak) to allow ComfyUI to listen on localhost only
       - ALLOW_GIT_URL_INSTALL=false
       - ALLOW_PIP_INSTALL=false
       # New ComfyUI Manager parameters (update to ComfyUI >= 0.5.0 before using)
