@@ -235,17 +235,25 @@ load_env() {
   fi
 }
 
-FORCE_CHOWN=${FORCE_CHOWN:-"false"} # any value works, empty value or false means disabled
+FORCE_CHOWN=${FORCE_CHOWN:-"false"}
 FORCE_CHOWN=`lc "${FORCE_CHOWN}"`
+check_valid_value "FORCE_CHOWN" "${FORCE_CHOWN}" "true false"
 
 # comfytoo is a specfiic user not existing by default on ubuntu, we can check its whomai
 if [ "A${whoami}" == "Acomfytoo" ]; then 
   echo "-- Running as comfytoo, will switch comfy to the desired UID/GID"
   # The script is started as comfytoo -- UID/GID 1025/1025
   
-  if [ "A${FORCE_CHOWN}" != "Afalse" ]; then
+  if [ "A${FORCE_CHOWN}" == "Atrue" ]; then
     echo "-- Force chown mode enabled, will force change directory ownership as comfy user during script rerun (might be slow)"
     sudo touch /etc/comfy_force_chown
+  else
+    if [ -f /etc/comfy_force_chown ]; then
+      echo "-- Force chown mode disabled, but /etc/comfy_force_chown present, deleting it to avoid force change directory ownership as comfy user during script rerun"
+      sudo rm -f /etc/comfy_force_chown
+    else
+      echo "-- Force chown mode disabled, will NOT force change directory ownership as comfy user during script rerun"
+    fi
   fi
 
   # We are altering the UID/GID of the comfy user to the desired ones and restarting as comfy
@@ -742,8 +750,10 @@ else
   check_valid_value "PREINSTALL_TORCH" "${PREINSTALL_TORCH}" "true false"
   if [ "A${PREINSTALL_TORCH}" == "Atrue" ]; then
     echo ""; echo "== Pre-installing/Upgrading torch"
-    # Allow the override of the torch installation command
-    if [ ! -z "${PREINSTALL_TORCH_CMD+x}" ]; then
+    # Allow the override of the torch installation command: PREINSTALL_TORCH_CMD must not be an empty string to be used
+    PREINSTALL_TORCH_CMD=${PREINSTALL_TORCH_CMD:-""}
+    if [ ! -z "${PREINSTALL_TORCH_CMD}" ]; then
+      echo "== Using PREINSTALL_TORCH_CMD: ${PREINSTALL_TORCH_CMD}"
       it="${PREINSTALL_TORCH_CMD}"
       # fix: recommendation was to use "pip3 install ..." must remove "pip3 install" from the command
       it=${it//pip3 install/}
