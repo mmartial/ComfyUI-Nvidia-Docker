@@ -736,7 +736,9 @@ This will create a `/comfy/mnt/torch_lock.txt` file (ie in the user's `run` fold
 That same `PIP3_CMD` is also used by the `userscript_dir` files.
 If you manually install python packages, you should use the copy and use the value of the `PIP3_CMD` environment variable (printed by the `init.bash` script during the container's run) to make sure that the specified versions of torch, torchvision and torchaudio are not modified. At minumum, add the `--constraint /comfy/mnt/torch_lock.txt` flag to the `pip install` command.
 
-When you decide to remove the `TORCH_LOCK` environment variable, it is recommended to also remove the `torch_lock.txt` file in the `run` folder.
+Note:
+
+- the `TORCH_LOCK` variable is not added to the Unraid template, and must be manually added if used.
 
 ### 5.4.8. USE_SOCAT
 

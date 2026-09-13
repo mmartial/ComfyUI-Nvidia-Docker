@@ -474,6 +474,11 @@ if [ ! -z "${TORCH_LOCK}" ]; then
   echo "${TORCH_LOCK}" | tr ' ' '\n' > ${COMFYUSER_DIR}/mnt/torch_lock.txt
   PIP3_CMD="${PIP3_CMD} --constraint ${COMFYUSER_DIR}/mnt/torch_lock.txt"
   echo "== Updated PIP3_CMD with constraints: \"${PIP3_CMD}\""
+else
+  if [ -f ${COMFYUSER_DIR}/mnt/torch_lock.txt ]; then
+    echo "== TORCH_LOCK not set: removing existing constraint file"
+    rm -f ${COMFYUSER_DIR}/mnt/torch_lock.txt
+  fi
 fi
 
 ##
