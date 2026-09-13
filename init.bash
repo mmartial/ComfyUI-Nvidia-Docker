@@ -677,7 +677,7 @@ ${PIP3_CMD} packaging || error_exit "Failed to install packaging"
 ${PIP3_CMD} Cython || error_exit "Failed to install Cython"
 # Addressing: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead.
 ${PIP3_CMD} nvidia-ml-py || error_exit "Failed to install nvidia-ml-py"
-# Manually remove `pynvml` after a `dockr exec`
+# Manually remove `pynvml` after a `docker exec`
 # % sudo su comfy
 # % source /comfy/mnt/venv/bin/activate
 # % uv pip uninstall pynvml
