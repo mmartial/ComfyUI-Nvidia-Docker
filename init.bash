@@ -873,25 +873,25 @@ else
   echo "  -- Using ComfyUI-Manager config file: $cm_conf"
   # SECURITY_LEVEL
   perl -p -i -e 's%^security_level\s*=.+$%security_level = '${SECURITY_LEVEL}'%g' $cm_conf
-  echo -n "  -- ComfyUI-Manager (should show: ${SECURITY_LEVEL}): "
+  echo -n "  -- ComfyUI-Manager security_level (requested: ${SECURITY_LEVEL}): "
   grep security_level $cm_conf
   # USE_UV
   W_UV="False"; if [ "A${USE_UV}" == "Atrue" ]; then W_UV="True"; fi
   perl -p -i -e 's%^use_uv\s*=.+$%use_uv = '${W_UV}'%g' $cm_conf
-  echo -n "  -- ComfyUI-Manager (should show: ${W_UV}): "
+  echo -n "  -- ComfyUI-Manager use_uv (requested: ${W_UV}): "
   grep use_uv $cm_conf
   # NETWORK_MODE=personal_cloud
   perl -p -i -e 's%^network_mode\s*=.+$%network_mode = '${NETWORK_MODE}'%g' $cm_conf
-  echo -n "  -- ComfyUI-Manager (should show: ${NETWORK_MODE}): "
+  echo -n "  -- ComfyUI-Manager network_mode (requested: ${NETWORK_MODE}): "
   grep network_mode $cm_conf
   # ALLOW_GIT_URL_INSTALL
   perl -p -i -e 's%^allow_git_url_install\s*=.+$%allow_git_url_install = '${ALLOW_GIT_URL_INSTALL}'%g' $cm_conf
-  echo -n "  -- ComfyUI-Manager (should show: ${ALLOW_GIT_URL_INSTALL}): "
-  grep allow_git_url_install $cm_conf
+  echo -n "  -- ComfyUI-Manager allow_git_url_install (requested: ${ALLOW_GIT_URL_INSTALL}): "
+  grep allow_git_url_install $cm_conf || echo "  Warning: allow_git_url_install not found in config file, can not update it"
   # ALLOW_PIP_INSTALL
   perl -p -i -e 's%^allow_pip_install\s*=.+$%allow_pip_install = '${ALLOW_PIP_INSTALL}'%g' $cm_conf
-  echo -n "  -- ComfyUI-Manager (should show: ${ALLOW_PIP_INSTALL}): "
-  grep allow_pip_install $cm_conf
+  echo -n "  -- ComfyUI-Manager allow_pip_install (requested: ${ALLOW_PIP_INSTALL}): "
+  grep allow_pip_install $cm_conf || echo "  Warning: allow_pip_install not found in config file, can not update it"
 fi
 
 # Attempt to use ComfyUI Manager CLI to fix all installed nodes -- This must be done within the activated virtualenv

@@ -1089,6 +1089,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
+- 20260914: fix for [Issue 143](https://github.com/mmartial/ComfyUI-Nvidia-Docker/issues/143)
 - 20260913: Added `ALLOW_GIT_URL_INSTALL` and `ALLOW_PIP_INSTALL` to support new [security policy](https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md) (enabling either will force `USE_SOCAT`) + Added `init: true` to all Compose files for clean signal forwarding + added enforcement of "authorized values" for variables
 - 20260906: Installation of the `comfy` CLI in the virtual env + temporary addition: `userscripts_dir/06-manager_csrf_patch.sh` that fixes ComfyUI-Manager 4.2.x CSRF NoneType crash when updating with legacy UI + Deprecation of remaining Ubuntu 22 based images
 - 20260805: Added compatibility for first Ubuntu 26.04 images + full ffmpeg/sqlite3 for sub-scripts + note: cu132 is now supported by uv but Comfy still prefers cu130 (torchaudio does not have a cu132 version)
