@@ -245,4 +245,4 @@ userscripts:
 #   % make docker_tag_list
 # - Update the Unraid template if needed with new release and environment variables (remember to push to GitHub)
 # - Update the Docker Hub template if needed with tag information(esp when latest changes or is about to change)
-# - Update DGX release: make build-dgx + test + make docker_dgx_push
+# - Update DGX release: make build-dgx + test + make docker_dgx_push + make docker_buildx_rm + clean tags
