@@ -15,4 +15,4 @@ RUN if [ "A${BUILD_APT_PROXY:-}" != "A" ]; then \
 
 ARG BASE_DOCKER_FROM=nvidia/cuda:13.3.1-cudnn-devel-ubuntu26.04
 
-ENV TORCH_CUDA_ARCH_LIST=12.1a
+
