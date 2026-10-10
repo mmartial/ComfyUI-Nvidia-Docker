@@ -171,6 +171,14 @@ else
   echo "== Using pip"
 fi
 
+# For PyTorch 3.14 we must make a few changes as seen in https://github.com/thu-ml/SageAttention/issues/400
+python3_version=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+if [ "$python3_version" == "3.14" ]; then
+  echo "== Python 3.14 detected, applying patch to setup.py to use C++20 instead of C++17"
+  wget https://gist.githubusercontent.com/fat-tire/56b5de6251c83945c421e8a4d0d3f501/raw/daef5c64b8ac157f3354454053dd9f183308a5ae/build_sage.py -P $tdd/
+  python3 -c 'import pathlib; pathlib.Path("'$tdd'/setup.py").write_text(pathlib.Path("'$tdd'/setup.py").read_text().replace("-std=c++17", "-std=c++20"))'
+fi
+
 CMD="EXT_PARALLEL=$ext_parallel NVCC_APPEND_FLAGS=\"--threads $num_threads\" MAX_JOBS=$numproc ${PIP3_CMD} ${PIP3_XTRA} . --no-build-isolation"
 echo "CMD: \"${CMD}\""
 echo $CMD > $tdd/build.cmd; chmod +x $tdd/build.cmd
