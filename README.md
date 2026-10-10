@@ -122,7 +122,8 @@ If this version is incompatible with your container runtime, please see the list
 | ubuntu24_cuda13.0-latest | | linux/amd64 | |
 | ubuntu24_cuda13.1-latest | | linux/amd64 | |
 | ubuntu24_cuda13.2-latest | | linux/amd64 | |
-| ubuntu26_cuda13.3-latest | | linux/amd64 | Ubuntu 26 base image, untested |
+| ubuntu26_cuda13.3-latest | | linux/amd64 | Ubuntu 26 base image |
+| ubuntu26_cuda13.4-latest | | linux/amd64 | Ubuntu 26 base image |
 | ubuntu24_cuda13.1-dgx-latest | | linux/arm64 | DGX build, recommended for `onnxruntime` support |
 | ubuntu26_cuda13.2-dgx-latest | | linux/arm64 | DGX build |
 | ubuntu26_cuda13.3-dgx-latest | | linux/arm64 | DGX build, Ubuntu 26 base image |
@@ -738,7 +739,15 @@ From https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md
 
 > These surfaces additionally require a loopback listener (--listen on a loopback IP such as 127.0.0.1 or ::1 — not a general LAN/private address)
 
-Enabling either will enable `USE_SOCAT` to support the requirement to listen ONLY on 127.0.0.1
+How this requirement is satisfied depends on the ComfyUI Manager in use:
+
+- **New manager** (`USE_NEW_MANAGER=true`) with `NETWORK_MODE=personal_cloud` (the default): the new manager accepts `network_mode = personal_cloud` in place of a loopback listener, so ComfyUI keeps listening on `0.0.0.0:8188`. `USE_SOCAT` is not enabled and `SECURITY_LEVEL` is left unchanged.
+- **Legacy manager** (`USE_NEW_MANAGER=false`), or any `NETWORK_MODE` other than `personal_cloud`: enabling either variable will enable `USE_SOCAT` (and force `SECURITY_LEVEL=weak`) to support the requirement to listen ONLY on 127.0.0.1
+
+Notes:
+
+- The choice is made from the `USE_NEW_MANAGER` environment variable at the start of the container. If the new manager is requested but can not be used (ComfyUI older than 0.5.0, i.e., no `manager_requirements.txt`), the script falls back to the legacy manager without `socat`: set `USE_SOCAT=true` manually in that case.
+- In both cases, anyone able to reach the exposed port can use those install features. Limit who can reach it (for example, publish the port as `127.0.0.1:8188:8188`, or use the Tailscale setup) if this is a concern.
 
 ### 5.4.8. TORCH_LOCK
 
@@ -764,6 +773,8 @@ The `USE_SOCAT` environment variable is used to enable an alternate service beha
 The default is to run ComfyUI within the container to listen on `0.0.0.0:8188` (i.e., all network interfaces), which is needed to make it accessible on the exposed port outside of the running container.
 
 Some `SECURITY_LEVEL` settings might prevent access to the WebUI unless the tool is running on `127.0.0.1` (i.e., only the host). The `USE_SOCAT=true` environment variable can be used to support this behavior.
+
+It is automatically enabled when `ALLOW_GIT_URL_INSTALL` or `ALLOW_PIP_INSTALL` is `true`, unless the new manager is used (`USE_NEW_MANAGER=true`) with `NETWORK_MODE=personal_cloud`. See the [ALLOW_GIT_URL_INSTALL and ALLOW_PIP_INSTALL](#547-allow_git_url_install-and-allow_pip_install) section for details.
 
 ### 5.4.10. FORCE_CHOWN
 
@@ -1089,6 +1100,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
+- 20261010: Newer version of ComfyUI Manager supports `personal_cloud`, do not enable `USE_SOCAT` by default anymore + Fix `userscripts_dir`'s SageAttention2+3 with PyTorch 2.14
 - 20260914: fix for [Issue 143](https://github.com/mmartial/ComfyUI-Nvidia-Docker/issues/143)
 - 20260913: Added `ALLOW_GIT_URL_INSTALL` and `ALLOW_PIP_INSTALL` to support new [security policy](https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md) (enabling either will force `USE_SOCAT`) + Added `init: true` to all Compose files for clean signal forwarding + added enforcement of "authorized values" for variables
 - 20260906: Installation of the `comfy` CLI in the virtual env + temporary addition: `userscripts_dir/06-manager_csrf_patch.sh` that fixes ComfyUI-Manager 4.2.x CSRF NoneType crash when updating with legacy UI + Deprecation of remaining Ubuntu 22 based images

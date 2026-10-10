@@ -130,6 +130,8 @@ fi
 NETWORK_MODE=${NETWORK_MODE:-"personal_cloud"}
 write_worldtmpfile $it "$NETWORK_MODE"
 echo "-- NETWORK_MODE: \"${NETWORK_MODE}\""
+# NETWORK_MODE must be personal_cloud (default)
+if [ "A${NETWORK_MODE}" != "Apersonal_cloud" ]; then error_exit "NETWORK_MODE has invalid value \"${NETWORK_MODE}\", expected one of: personal_cloud"; fi
 
 # Set base directory (if not used, set to $ignore_value)
 it=$itdir/comfy_base_directory
@@ -303,11 +305,20 @@ fi
 
 ######## Environment variables (consume AFTER the load_env)
 
+USE_NEW_MANAGER=${USE_NEW_MANAGER:-"false"}
+USE_NEW_MANAGER=`lc "${USE_NEW_MANAGER}"`
+check_valid_value "USE_NEW_MANAGER" "${USE_NEW_MANAGER}" "true false"
+
 # if ALLOW_GIT_URL_INSTALL is set to true OR ALLOW_PIP_INSTALL is set to true, enable USE_SOCAT
+# unless using the new manager with NETWORK_MODE=personal_cloud (which it accepts in place of a loopback listener)
 if [ "${ALLOW_GIT_URL_INSTALL:-false}" = "true" ] || [ "${ALLOW_PIP_INSTALL:-false}" = "true" ]; then
-  echo "== ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, enabling USE_SOCAT and forcing SECURITY_LEVEL to weak"
-  USE_SOCAT="true"
-  SECURITY_LEVEL="weak"
+  if [ "A${USE_NEW_MANAGER}" == "Atrue" ]; then
+    echo "== ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, USE_NEW_MANAGER is true and NETWORK_MODE is personal_cloud: USE_SOCAT will not be enabled by default"
+  else
+    echo "== ALLOW_GIT_URL_INSTALL or ALLOW_PIP_INSTALL is true, USE_NEW_MANAGER is false, enabling USE_SOCAT and forcing SECURITY_LEVEL to weak"
+    USE_SOCAT="true"
+    SECURITY_LEVEL="weak"
+  fi
 fi
 
 # Default behavior: listen on 0.0.0.0
@@ -794,10 +805,6 @@ fi
 
 export COMFYUI_PATH=`pwd`
 echo ""; echo "-- COMFYUI_PATH: ${COMFYUI_PATH}"
-
-USE_NEW_MANAGER=${USE_NEW_MANAGER:-"false"}
-USE_NEW_MANAGER=`lc "${USE_NEW_MANAGER}"`
-check_valid_value "USE_NEW_MANAGER" "${USE_NEW_MANAGER}" "true false"
 
 ENABLE_MANAGER_LEGACY_UI=${ENABLE_MANAGER_LEGACY_UI:-"false"}
 ENABLE_MANAGER_LEGACY_UI=`lc "${ENABLE_MANAGER_LEGACY_UI}"`

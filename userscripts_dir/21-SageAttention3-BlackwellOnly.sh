@@ -137,13 +137,13 @@ git clone \
   --recurse-submodules https://github.com/thu-ml/SageAttention.git \
   $tdd
 xtdd="$tdd/sageattention3_blackwell"
+# ^ one level deeper for Blackwell
 
 echo "++ Compiling SageAttention"
 
 echo "PIP3_CMD: \"${PIP3_CMD}\""
 ## Compile SageAttention
 cd $xtdd
-# ^ one level deeper for Blackwell
 # Heavy compilation parallelization: lower the number manually if needed
 echo " - pwd: $(pwd)"
 numproc=$(nproc --all)
@@ -163,10 +163,17 @@ else
   echo "== Using pip"
 fi
 
+# For PyTorch 2.14 we must make a few changes as seen in https://github.com/thu-ml/SageAttention/issues/400
+if [ "$torch_version" == "2.14" ]; then
+  echo "== PyTorch 2.14 detected, applying patch to setup.py to use C++20 instead of C++17"
+  python3 -c 'import pathlib; pathlib.Path("'$xtdd'/setup.py").write_text(pathlib.Path("'$xtdd'/setup.py").read_text().replace("-std=c++17", "-std=c++20"))'
+fi
+
 CMD="EXT_PARALLEL=$ext_parallel NVCC_APPEND_FLAGS=\"--threads $num_threads\" MAX_JOBS=$numproc ${PIP3_CMD} ${PIP3_XTRA} . --no-build-isolation"
 echo "CMD: \"${CMD}\""
-echo $CMD > $tdd/build.cmd; chmod +x $tdd/build.cmd
-script -a -e -c $tdd/build.cmd $tdd/build.log || error_exit "Failed to build SageAttention"
+echo "PWD: $(pwd)"
+echo $CMD > $xtdd/build.cmd; chmod +x $xtdd/build.cmd
+script -a -e -c $xtdd/build.cmd $xtdd/build.log || error_exit "Failed to build SageAttention"
 cd $bd
 
 mv $tdd $dd
