@@ -122,8 +122,10 @@ If this version is incompatible with your container runtime, please see the list
 | ubuntu24_cuda13.0-latest | | linux/amd64 | |
 | ubuntu24_cuda13.1-latest | | linux/amd64 | |
 | ubuntu24_cuda13.2-latest | | linux/amd64 | |
-| ubuntu26_cuda13.3-latest | | linux/amd64 | Ubuntu 26 base image |
-| ubuntu26_cuda13.4-latest | | linux/amd64 | Ubuntu 26 base image |
+| ubuntu24_cuda13.3-latest | | linux/amd64 | |
+| ubuntu24_cuda13.4-latest | | linux/amd64 | |
+| ubuntu26_cuda13.3-latest | | linux/amd64 | [TEMPORARY NOT BUILT](https://github.com/mmartial/ComfyUI-Nvidia-Docker/issues/146) -- Ubuntu 26 base image |
+| ubuntu26_cuda13.4-latest | | linux/amd64 | [TEMPORARY NOT BUILT](https://github.com/mmartial/ComfyUI-Nvidia-Docker/issues/146) |
 | ubuntu24_cuda13.1-dgx-latest | | linux/arm64 | DGX build, recommended for `onnxruntime` support |
 | ubuntu26_cuda13.2-dgx-latest | | linux/arm64 | DGX build |
 | ubuntu26_cuda13.3-dgx-latest | | linux/arm64 | DGX build, Ubuntu 26 base image |
