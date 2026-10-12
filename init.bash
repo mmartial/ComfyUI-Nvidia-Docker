@@ -356,22 +356,31 @@ echo ""; echo "== Confirming we have the NVIDIA driver loaded and showing detail
 if ! command -v nvidia-smi &> /dev/null; then
   error_exit "nvidia-smi not found"
 fi
-nvidia-smi || error_exit "Failed to run nvidia-smi"
+nvidia_smi_output=$(nvidia-smi) || error_exit "Failed to run nvidia-smi"
+echo "$nvidia_smi_output"
 
-driver_cuda_version=$(nvidia-smi | grep "CUDA Version" | awk -F': ' '{print $3}' | cut -d' ' -f1)
-driver_cuda_major=$(echo "$driver_cuda_version" | awk -F'.' '{print $1}')
-driver_cuda_minor=$(echo "$driver_cuda_version" | awk -F'.' '{print $2}')
+if [[ $nvidia_smi_output =~ CUDA[[:space:]]+(UMD[[:space:]]+)?Version:[[:space:]]*([0-9]+)\.([0-9]+) ]]; then
+  driver_cuda_major=$((10#${BASH_REMATCH[2]}))
+  driver_cuda_minor=$((10#${BASH_REMATCH[3]}))
+  driver_cuda_version="$driver_cuda_major.$driver_cuda_minor"
+else
+  error_exit "Unable to determine driver CUDA version from nvidia-smi output"
+fi
 echo ""; echo "-- Found Max driver CUDA version: $driver_cuda_version (major: $driver_cuda_major, minor: $driver_cuda_minor)"
 if [ "$driver_cuda_major" -lt 12 ]; then error_exit "Driver CUDA version $driver_cuda_version is below minimum version 12, please upgrade your driver"; fi
 
 
 # Checking the version of CUDA supported by the container itself to decide which PyTorch wheel to install (from BUILD_BASE)
 # per https://pytorch.org/ the default installation is 12.6, but 12.8 is available
-cuda_version=$(echo "${BUILD_BASE}" | awk -F'cuda' '{print $2}')
-cuda_major=$(echo "$cuda_version" | awk -F'.' '{print $1}')
-cuda_minor=$(echo "$cuda_version" | awk -F'.' '{print $2}')
+if [[ $BUILD_BASE =~ cuda([0-9]+)\.([0-9]+)(\.[0-9]+)?($|[^0-9.]) ]]; then
+  cuda_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+  cuda_major=$((10#${BASH_REMATCH[1]}))
+  cuda_minor=$((10#${BASH_REMATCH[2]}))
+else
+  error_exit "Unable to determine container CUDA version from BUILD_BASE: $BUILD_BASE"
+fi
 echo "-- Found Max container CUDA version: $cuda_version (major: $cuda_major, minor: $cuda_minor)"
-if [ $driver_cuda_minor -gt $cuda_minor ]; then echo "FYSA: The Driver CUDA supports a more recent version than the used container does. Consider using a more recent container version (if available)."; fi
+if (( driver_cuda_major > cuda_major || (driver_cuda_major == cuda_major && driver_cuda_minor > cuda_minor) )); then echo "FYSA: The Driver CUDA supports a more recent version than the used container does. Consider using a more recent container version (if available)."; fi
 
 
 dir_validate() { # arg1 = directory to validate / arg2 = "mount" or ""; a "mount" can not be chmod'ed
