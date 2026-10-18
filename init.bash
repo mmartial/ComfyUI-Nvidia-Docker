@@ -680,6 +680,7 @@ run_userscript() {
     rm -f $userscript_env || error_exit "Failed to remove ${userscript_env}"
   fi
 
+  echo ""; echo "============================"
   echo "++ Running user script: ${userscript}"
   $userscript || error_exit "User script ($userscript) failed or exited with an error, stopping further processing"
 
