@@ -680,6 +680,7 @@ run_userscript() {
     rm -f $userscript_env || error_exit "Failed to remove ${userscript_env}"
   fi
 
+  echo ""; echo "============================"
   echo "++ Running user script: ${userscript}"
   $userscript || error_exit "User script ($userscript) failed or exited with an error, stopping further processing"
 
@@ -708,6 +709,8 @@ ${PIP3_CMD} wheel || error_exit "Failed to install wheel"
 ${PIP3_CMD} pybind11 || error_exit "Failed to install pybind11"
 ${PIP3_CMD} packaging || error_exit "Failed to install packaging"
 ${PIP3_CMD} Cython || error_exit "Failed to install Cython"
+# Addressing: No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+${PIP3_CMD} PyOpenGL-accelerate || error_exit "Failed to install PyOpenGL-accelerate"
 # Addressing: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead.
 ${PIP3_CMD} nvidia-ml-py || error_exit "Failed to install nvidia-ml-py"
 # Manually remove `pynvml` after a `docker exec`
@@ -819,7 +822,7 @@ ENABLE_MANAGER_LEGACY_UI=${ENABLE_MANAGER_LEGACY_UI:-"false"}
 ENABLE_MANAGER_LEGACY_UI=`lc "${ENABLE_MANAGER_LEGACY_UI}"`
 check_valid_value "ENABLE_MANAGER_LEGACY_UI" "${ENABLE_MANAGER_LEGACY_UI}" "true false"
 
-# if the legacy manager is not installed, we will install the new manager instead
+# if the legacy manager is not installed, we will use the new manager instead
 customnodes_dir=${COMFYUI_PATH}/custom_nodes
 if [ ! -z "$BASE_DIRECTORY" ]; then it=${BASE_DIRECTORY}/custom_nodes; if [ -d $it ]; then customnodes_dir=$it; fi; fi
 it="$it/ComfyUI-Manager"
@@ -828,7 +831,7 @@ if [ ! -d "$it" ]; then
   USE_NEW_MANAGER="true"
 fi
 
-# if the new manager is requested, install it
+# if the new manager is requested, install its requirements
 # Per https://blog.comfy.org/p/meet-the-new-comfyui-manager the new one and old one can exist together
 if [ "A${USE_NEW_MANAGER}" == "Atrue" ]; then
   echo "== Using new ComfyUI Manager"
@@ -1002,6 +1005,17 @@ if [ ! -z "$BASE_DIRECTORY" ]; then
     echo "  ++ Creating $it"
     mkdir -p $it || error_exit "Failed to create $it"
   fi
+
+  # Validate that the ComfyUI extensions folder is present in the base directory (for older nodes), create it if not
+  it=${BASE_DIRECTORY}/web/extensions
+  if [ ! -d $it ]; then
+    echo "  ++ Creating $it"
+    mkdir -p $it || error_exit "Failed to create $it"
+  fi
+  dir_validate "$it"
+  it=${it}/.testfile; touch $it && rm -f $it || error_exit "Failed to write to $it"
+  echo "  == Validated ComfyUI extensions folder: $it"
+  echo "  == ComfyUI extensions folder is expected to be at: $BASE_DIRECTORY/web/extensions"
 
   # and extend the command line using COMFY_CMDLINE_EXTRA (export to be accessible to child processes such as the user script)
   export COMFY_CMDLINE_EXTRA="${COMFY_CMDLINE_EXTRA} --base-directory $BASE_DIRECTORY"
