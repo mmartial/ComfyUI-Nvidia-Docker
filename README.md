@@ -1104,6 +1104,7 @@ For additional details, see [Issue 132](https://github.com/mmartial/ComfyUI-Nvid
 
 # 7. Changelog
 
+- 20261018: `nvidia-smi` output format update
 - 20261010: Newer version of ComfyUI Manager supports `personal_cloud`, do not enable `USE_SOCAT` by default anymore + Fix `userscripts_dir`'s SageAttention2+3 with PyTorch 2.14
 - 20260914: fix for [Issue 143](https://github.com/mmartial/ComfyUI-Nvidia-Docker/issues/143)
 - 20260913: Added `ALLOW_GIT_URL_INSTALL` and `ALLOW_PIP_INSTALL` to support new [security policy](https://github.com/Comfy-Org/ComfyUI-Manager/blob/main/CHANGELOG.md) (enabling either will force `USE_SOCAT`) + Added `init: true` to all Compose files for clean signal forwarding + added enforcement of "authorized values" for variables
