@@ -32,6 +32,18 @@ else
   echo "== Using pip"
 fi
 
+install_override_enabled() {
+  local override
+  for override in ${CUSTOMNODES_FIXER_INSTALL_OVERRIDE:-}; do
+    if [ "${override}" == "${cn_name}" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+echo "== CUSTOMNODES_FIXER_INSTALL_OVERRIDE: \"${CUSTOMNODES_FIXER_INSTALL_OVERRIDE:-}\""
+
 # Find custom nodes with requirements.txt in /basedir/custom_nodes
 # list all folders in /basedir/custom_nodes, ignore __pycache__
 
@@ -47,6 +59,23 @@ for cn in $todo; do
   if [ -f "requirements.txt" ]; then
     echo " ++ Found requirements.txt, installing"
     if $PIP3_CMD -r requirements.txt; then
+      status=0
+    else
+      status=1
+    fi
+    echo " ++ Status: $status"
+    echo ""
+  fi
+
+  if [ -f "install.py" ] && install_override_enabled; then
+    echo " ++ Found install.py and node is listed in CUSTOMNODES_FIXER_INSTALL_OVERRIDE, running"
+    if [ -f "/comfy/mnt/torch_lock.txt" ]; then
+      if PIP_CONSTRAINT=/comfy/mnt/torch_lock.txt /comfy/mnt/venv/bin/python install.py; then
+        status=0
+      else
+        status=1
+      fi
+    elif /comfy/mnt/venv/bin/python install.py; then
       status=0
     else
       status=1

@@ -605,7 +605,7 @@ This directory is used to run independent user scripts in order to perform addit
 Each script differs, so it is recommended to read the comments at the beginining of each script to understand what it does and how to use it (in particular, some will not perform compilation if a previous version of the download folder is present).
 
 A few scripts are provided in the `userscripts_dir` folder:
-- [05-customnodes_fixer.sh](userscripts_dir/11-onnxruntime-gpu.sh): will attempt to go into all the custom nodes installation folders and install their `requirements.txt`
+- [05-customnodes_fixer.sh](userscripts_dir/05-customnodes_fixer.sh): will attempt to go into all the custom nodes installation folders and install their `requirements.txt`. Nodes with an `install.py` can be explicitly enabled with the space-separated `CUSTOMNODES_FIXER_INSTALL_OVERRIDE` environment variable, for example `CUSTOMNODES_FIXER_INSTALL_OVERRIDE="ComfyUI-ExampleNode AnotherNode"`. Note: the exact name of the custom node as shown in the log (the folder name) needs to be used.
 - [06-manager_csrf_patch.sh](userscripts_dir/06-manager_csrf_patch.sh), fixes ComfyUI-Manager 4.2.x CSRF NoneType crash when updating with legacy UI.
 - [11-onnxruntime-gpu.sh](userscripts_dir/11-onnxruntime-gpu.sh)
 - [12-xformers.sh](userscripts_dir/12-xformers.sh)
